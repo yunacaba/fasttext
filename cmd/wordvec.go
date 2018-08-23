@@ -5,7 +5,7 @@ import (
 
 	"github.com/Unknwon/com"
 	"github.com/k0kubun/pp"
-	fasttext "github.com/rai-project/go-fasttext"
+	fasttext "github.com/bountylabs/go-fasttext"
 	"github.com/spf13/cobra"
 )
 

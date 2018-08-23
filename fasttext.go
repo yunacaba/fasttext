@@ -57,6 +57,8 @@ func (handle *Model) Predict(query string) (Predictions, error) {
 	defer C.free(unsafe.Pointer(r))
 	js := C.GoString(r)
 
+  panic("here")
+
 	// unmarshal the json results into the predictions
 	// object. See https://blog.golang.org/json-and-go
 	predictions := []Prediction{}
