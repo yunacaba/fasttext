@@ -57,8 +57,6 @@ func (handle *Model) Predict(query string) (Predictions, error) {
 	defer C.free(unsafe.Pointer(r))
 	js := C.GoString(r)
 
-  panic("here")
-
 	// unmarshal the json results into the predictions
 	// object. See https://blog.golang.org/json-and-go
 	predictions := []Prediction{}
@@ -87,7 +85,7 @@ func (handle *Model) Analogy(query string) (Analogs, error) {
 	return analogies, nil
 }
 
-func (handle *Model) Wordvec(query string) (Vectors, error) {
+func (handle *Model) Wordvec(query string) ([]float32, error) {
 	cquery := C.CString(query)
 	defer C.free(unsafe.Pointer(cquery))
 
@@ -95,7 +93,7 @@ func (handle *Model) Wordvec(query string) (Vectors, error) {
 	defer C.free(unsafe.Pointer(r))
 	js := C.GoString(r)
 
-	vectors := []Vector{}
+	vectors := []float32{}
 	err := json.Unmarshal([]byte(js), &vectors)
 	if err != nil {
 		return nil, err
@@ -103,3 +101,22 @@ func (handle *Model) Wordvec(query string) (Vectors, error) {
 
 	return vectors, nil
 }
+
+//Requires sentence ends with </s>
+func (handle *Model) Sentencevec(query string) ([]float32, error) {
+  cquery := C.CString(query)
+  defer C.free(unsafe.Pointer(cquery))
+
+  r := C.Sentencevec(handle.handle, cquery)
+  defer C.free(unsafe.Pointer(r))
+  js := C.GoString(r)
+
+  vectors := []float32{}
+  err := json.Unmarshal([]byte(js), &vectors)
+  if err != nil {
+    return nil, err
+  }
+
+  return vectors, nil
+}
+

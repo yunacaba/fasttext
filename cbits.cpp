@@ -94,10 +94,27 @@ char *Wordvec(FastTextHandle handle, char *query) {
   model->getWordVector(vec, query);
 
   auto res = json::array();
-  for (int i = 0; i < vec.data_.size(); i++) {
-    res.push_back({
-        {"probability",vec.data_[i]},
-    });
+  for (int i = 0; i < vec.size(); i++) {
+    res.push_back(vec[i]);
+  }
+
+  return strdup(res.dump().c_str());
+}
+
+char *Sentencevec(FastTextHandle handle, char *query) {
+  auto model = bit_cast<fasttext::FastText *>(handle);
+
+  membuf sbuf(query, query + strlen(query));
+  std::istream in(&sbuf);
+
+  fasttext::Vector vec(model->getDimension());
+  // fasttext::Matrix wordVectors(model->dict_->nwords(), model->getDimension());
+  // model->precomputeWordVectors(wordVectors);
+  model->getSentenceVector(in, vec);
+
+  auto res = json::array();
+  for (int i = 0; i < vec.size(); i++) {
+    res.push_back(vec[i]);
   }
 
   return strdup(res.dump().c_str());
