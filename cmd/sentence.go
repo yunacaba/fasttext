@@ -3,10 +3,10 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/Unknwon/com"
-	"github.com/k0kubun/pp"
 	fasttext "github.com/bountylabs/go-fasttext"
+	"github.com/k0kubun/pp"
 	"github.com/spf13/cobra"
+	"github.com/unknwon/com"
 )
 
 // predictCmd represents the predict command
@@ -35,6 +35,6 @@ var sentenceCmd = &cobra.Command{
 }
 
 func init() {
-  sentenceCmd.Flags().StringVarP(&modelPath, "model", "m", "", "path to the fasttext model")
+	sentenceCmd.Flags().StringVarP(&modelPath, "model", "m", "", "path to the fasttext model")
 	rootCmd.AddCommand(sentenceCmd)
 }
