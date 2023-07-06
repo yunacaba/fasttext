@@ -3,15 +3,12 @@ package cmd
 import (
 	"fmt"
 
-	fasttext "github.com/bountylabs/go-fasttext"
 	"github.com/k0kubun/pp"
 	"github.com/spf13/cobra"
 	"github.com/unknwon/com"
-)
 
-// var (
-// 	unsupervisedModelPath string
-// )
+	"github.com/nano-interactive/go-fasttext"
+)
 
 // predictCmd represents the predict command
 var wordvecCmd = &cobra.Command{

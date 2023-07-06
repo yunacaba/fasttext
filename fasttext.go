@@ -1,6 +1,6 @@
 package fasttext
 
-// #cgo CXXFLAGS: -I${SRCDIR}/fastText/src -I${SRCDIR} -std=c++14
+// #cgo CXXFLAGS: -I${SRCDIR}/fastText/src -I${SRCDIR} -std=c++20 -O3 -fPIC
 // #cgo LDFLAGS: -lstdc++
 // #include <stdio.h>
 // #include <stdlib.h>
@@ -15,8 +15,8 @@ import (
 // A model object. Effectively a wrapper
 // around the C fasttext handle
 type Model struct {
-	path   string
 	handle C.FastTextHandle
+	path   string
 }
 
 // Opens a model from a path and returns a model
@@ -119,4 +119,3 @@ func (handle *Model) Sentencevec(query string) ([]float32, error) {
 
   return vectors, nil
 }
-

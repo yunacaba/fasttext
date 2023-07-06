@@ -3,10 +3,11 @@ package cmd
 import (
 	"fmt"
 
-	fasttext "github.com/bountylabs/go-fasttext"
 	"github.com/k0kubun/pp"
 	"github.com/spf13/cobra"
 	"github.com/unknwon/com"
+
+	"github.com/nano-interactive/go-fasttext"
 )
 
 var (

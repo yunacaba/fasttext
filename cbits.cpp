@@ -13,7 +13,7 @@
 #include "matrix.cc"
 #include "model.cc"
 #include "productquantizer.cc"
-#include "qmatrix.cc"
+#include "quantmatrix.cc"
 #include "utils.cc"
 #include "vector.cc"
 
@@ -58,7 +58,7 @@ char *Predict(FastTextHandle handle, char *query) {
   std::istream in(&sbuf);
 
   std::vector<std::pair<fasttext::real, std::string>> predictions;
-  model->predict(in, 4, predictions);
+  model->predictLine(in, predictions, 1, 0.0f);
 
   size_t ii = 0;
   auto res = json::array();
@@ -77,7 +77,7 @@ char *Predict(FastTextHandle handle, char *query) {
 char *Analogy(FastTextHandle handle, char *query) {
   auto model = bit_cast<fasttext::FastText *>(handle);
 
-  model->analogies(10);
+  model->getAnalogies(1, query, 10);
 
   size_t ii = 0;
   auto res = json::array();
