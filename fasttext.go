@@ -1,6 +1,6 @@
 package fasttext
 
-// #cgo CXXFLAGS: -I${SRCDIR}/fastText/src -I${SRCDIR} -std=c++20 -O3 -fPIC
+// #cgo CXXFLAGS: -I${SRCDIR}/fastText/src -I${SRCDIR} -I${SRCDIR}/include -std=c++17 -O3 -fPIC
 // #cgo LDFLAGS: -lstdc++
 // #include <stdio.h>
 // #include <stdlib.h>
@@ -16,7 +16,6 @@ import (
 // around the C fasttext handle
 type Model struct {
 	handle C.FastTextHandle
-	path   string
 }
 
 // Opens a model from a path and returns a model
@@ -30,7 +29,6 @@ func Open(path string) *Model {
 	defer C.free(unsafe.Pointer(cpath))
 
 	return &Model{
-		path:   path,
 		handle: C.NewHandle(cpath),
 	}
 }
