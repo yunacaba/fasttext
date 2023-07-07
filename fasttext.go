@@ -20,11 +20,7 @@ type Model struct {
 // Opens a model from a path and returns a model
 // object
 func Open(path string) Model {
-	// fmt.Println("something")
-	// create a C string from the Go string
 	cpath := C.CString(path)
-	// you have to delete the converted string
-	// See https://github.com/golang/go/wiki/cgo
 	defer C.free(unsafe.Pointer(cpath))
 
 	return Model{
@@ -41,31 +37,34 @@ func (handle *Model) Close() error {
 	return nil
 }
 
-// // Performs model prediction
-// func (handle *Model) Predict(query string) (Predictions, error) {
-// 	cquery := C.CString(query)
-// 	defer C.free(unsafe.Pointer(cquery))
+// // Perform model prediction
+func (handle Model) Predict(query string) Predictions {
+	cquery := C.CString(query)
+	defer C.free(unsafe.Pointer(cquery))
 
-// 	// Call the Predict function defined in cbits.cpp
-// 	// passing in the model handle and the query string
-// 	r := C.Predict(handle.handle, cquery, C.size_t(len(query)))
-// 	// the C code returns a c string which we need to
-// 	// convert to a go string
-// 	defer C.free(unsafe.Pointer(r))
-// 	js := C.GoString(r)
+	// Call the Predict function defined in cbits.cpp
+	// passing in the model handle and the query string
+	r := C.FastText_Predict(handle.p, C.FastText_String_t{
+		data: cquery,
+		size: C.size_t(len(query)),
+	})
+	defer C.FastText_FreePredict(r)
 
-// 	// unmarshal the json results into the predictions
-// 	// object. See https://blog.golang.org/json-and-go
-// 	predictions := []Prediction{}
-// 	err := json.Unmarshal([]byte(js), &predictions)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	predictions := make(Predictions, r.size)
 
-// 	return predictions, nil
-// }
+	for i := 0; i < int(r.size); i++ {
+		cPredic := C.FastText_PredictItemAt(r, C.size_t(i))
 
-// func (handle *Model) Analogy(query string) (Analogs, error) {
+		predictions[i] = Prediction{
+			Label:       C.GoStringN(cPredic.label.data, C.int(cPredic.label.size)),
+			Probability: float32(cPredic.probability),
+		}
+	}
+
+	return predictions
+}
+
+// func (handle Model) Analogy(query string) (Analogs, error) {
 // 	cquery := C.CString(query)
 // 	defer C.free(unsafe.Pointer(cquery))
 
@@ -82,11 +81,14 @@ func (handle *Model) Close() error {
 // 	return analogies, nil
 // }
 
-func (handle *Model) Wordvec(word string) []float32 {
+func (handle Model) Wordvec(word string) []float32 {
 	cquery := C.CString(word)
 	defer C.free(unsafe.Pointer(cquery))
 
-	r := C.FastText_Wordvec(handle.p, cquery, C.size_t(len(word)))
+	r := C.FastText_Wordvec(handle.p, C.FastText_String_t{
+		data: cquery,
+		size: C.size_t(len(word)),
+	})
 	defer C.FastText_FreeFloatVector(r)
 
 	vectors := make([]float32, r.size)
@@ -96,11 +98,15 @@ func (handle *Model) Wordvec(word string) []float32 {
 }
 
 // Requires sentence ends with </s>
-func (handle *Model) Sentencevec(query string) []float32 {
-  cquery := C.CString(query)
-  defer C.free(unsafe.Pointer(cquery))
+func (handle Model) Sentencevec(query string) []float32 {
+	cquery := C.CString(query)
+	defer C.free(unsafe.Pointer(cquery))
 
-  r := C.FastText_Sentencevec(handle.p, cquery, C.size_t(len(query)))
+	r := C.FastText_Sentencevec(handle.p, C.FastText_String_t{
+		data: cquery,
+		size: C.size_t(len(query)),
+	})
+
 	defer C.FastText_FreeFloatVector(r)
 
 	vectors := make([]float32, r.size)

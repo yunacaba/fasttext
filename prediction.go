@@ -7,7 +7,6 @@ import (
 
 type Prediction struct {
 	Label       string  `json:"label"`
-	Index       int     `json:"index"`
 	Probability float32 `json:"probability"`
 }
 
