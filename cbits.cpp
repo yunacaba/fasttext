@@ -4,7 +4,6 @@
 #include <memory>
 #include <streambuf>
 
-#include <args.cc>
 #include <autotune.cc>
 #include <dictionary.cc>
 #include <fasttext.cc>
@@ -47,7 +46,12 @@ void FastText_DeleteHandle(const FastTextHandle handle)
     delete model;
 }
 
-FastText_Predict_t FastText_Predict(const FastTextHandle handle, FastText_String_t query)
+FastText_Predict_t FastText_PredictOne(const FastTextHandle handle, FastText_String_t query, float threshold)
+{
+    return FastText_Predict(handle, query, 1, threshold);
+}
+
+FastText_Predict_t FastText_Predict(const FastTextHandle handle, FastText_String_t query, int k, float threshold)
 {
     const auto model = reinterpret_cast<fasttext::FastText *>(handle);
 
@@ -55,8 +59,12 @@ FastText_Predict_t FastText_Predict(const FastTextHandle handle, FastText_String
     std::istream in(&sbuf);
 
     auto predictions = new std::vector<std::pair<fasttext::real, std::string>>();
-    model->predictLine(in, reinterpret_cast<std::vector<std::pair<fasttext::real, std::string>> &>(predictions), 1,
-                       0.0f);
+    model->predictLine(in, reinterpret_cast<std::vector<std::pair<fasttext::real, std::string>> &>(predictions), k,
+                       threshold);
+
+    free(query.data);
+    query.data = nullptr;
+    query.size = 0;
 
     return FastText_Predict_t{
         predictions->size(),
@@ -64,19 +72,19 @@ FastText_Predict_t FastText_Predict(const FastTextHandle handle, FastText_String
     };
 }
 
-char *FastText_Analogy(const FastTextHandle handle, const char *query, size_t length)
-{
-    return "";
+// char *FastText_Analogy(const FastTextHandle handle, const char *query, size_t length)
+// {
+//     return "";
 
-    // auto model = reinterpret_cast<fasttext::FastText *>(handle);
+//     // auto model = reinterpret_cast<fasttext::FastText *>(handle);
 
-    // model->getAnalogies(1, query, 10);
+//     // model->getAnalogies(1, query, 10);
 
-    // size_t ii = 0;
-    // auto res = json::array();
+//     // size_t ii = 0;
+//     // auto res = json::array();
 
-    // return strdup(res.dump().c_str());
-}
+//     // return strdup(res.dump().c_str());
+// }
 
 FastText_FloatVector_t FastText_Wordvec(const FastTextHandle handle, FastText_String_t word)
 {
@@ -85,6 +93,10 @@ FastText_FloatVector_t FastText_Wordvec(const FastTextHandle handle, FastText_St
 
     auto vec = new fasttext::Vector(dimensions);
     model->getWordVector(reinterpret_cast<fasttext::Vector &>(vec), std::string(word.data, word.size));
+
+    free(word.data);
+    word.data = nullptr;
+    word.size = 0;
 
     return FastText_FloatVector_t{
         vec->data(),
@@ -102,6 +114,9 @@ FastText_FloatVector_t FastText_Sentencevec(const FastTextHandle handle, FastTex
 
     auto vec = new fasttext::Vector(model->getDimension());
     model->getSentenceVector(in, reinterpret_cast<fasttext::Vector &>(vec));
+    free(sentance.data);
+    sentance.data = nullptr;
+    sentance.size = 0;
 
     return FastText_FloatVector_t{
         vec->data(),

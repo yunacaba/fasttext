@@ -36,11 +36,13 @@ extern "C"
 
     FastTextHandle FastText_NewHandle(const char *path);
     void FastText_DeleteHandle(const FastTextHandle handle);
-    FastText_Predict_t FastText_Predict(const FastTextHandle handle, FastText_String_t query);
+    FastText_Predict_t FastText_Predict(const FastTextHandle handle, FastText_String_t query, int k, float threshold);
+    FastText_Predict_t FastText_PredictOne(const FastTextHandle handle, FastText_String_t query, float threshold);
+
     FastText_FloatVector_t FastText_Wordvec(const FastTextHandle handle, FastText_String_t word);
     FastText_FloatVector_t FastText_Sentencevec(const FastTextHandle handle, FastText_String_t sentance);
 
-    char *FastText_Analogy(const FastTextHandle handle, FastText_String_t query);
+    // char *FastText_Analogy(const FastTextHandle handle, FastText_String_t query);
 
     void FastText_FreeFloatVector(FastText_FloatVector_t vector);
     void FastText_FreePredict(FastText_Predict_t predict);

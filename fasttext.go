@@ -1,6 +1,6 @@
 package fasttext
 
-// #cgo CXXFLAGS: -I${SRCDIR}/fastText/src -I${SRCDIR} -I${SRCDIR}/include -std=c++17 -O3 -fPIC -pedantic -Wall -Wextra -Wno-sign-compare -Wno-unused-parameter
+// #cgo CXXFLAGS: -I${SRCDIR}/fastText/src -I${SRCDIR} -I${SRCDIR}/include -std=c++17 -O3 -fPIC
 // #cgo LDFLAGS: -lstdc++
 // #include <stdio.h>
 // #include <stdlib.h>
@@ -8,6 +8,7 @@ package fasttext
 import "C"
 
 import (
+	"strings"
 	"unsafe"
 )
 
@@ -37,17 +38,43 @@ func (handle *Model) Close() error {
 	return nil
 }
 
-// // Perform model prediction
-func (handle Model) Predict(query string) Predictions {
+func (handle Model) MultiLinePredict(query string, k int32, threshoad float32 ) []Predictions {
+	lines := strings.Split(query, "\n")
+
+	predics := make([]Predictions, 0, len(lines))
+
+	for _, line := range lines {
+		predictions := handle.Predict(line, k, threshoad)
+		predics = append(predics, predictions)
+	}
+
+	return predics
+}
+
+func (handle Model) PredictOne(query string, threshoad float32) Prediction {
 	cquery := C.CString(query)
 	defer C.free(unsafe.Pointer(cquery))
 
-	// Call the Predict function defined in cbits.cpp
-	// passing in the model handle and the query string
-	r := C.FastText_Predict(handle.p, C.FastText_String_t{
+	r := C.FastText_PredictOne(handle.p, C.FastText_String_t{
 		data: cquery,
 		size: C.size_t(len(query)),
-	})
+	}, C.float(threshoad))
+	defer C.FastText_FreePredict(r)
+
+	cPredic := C.FastText_PredictItemAt(r, C.size_t(0))
+
+	return Prediction{
+		Label:       C.GoStringN(cPredic.label.data, C.int(cPredic.label.size)),
+		Probability: float32(cPredic.probability),
+	}
+}
+
+// Perform model prediction
+func (handle Model) Predict(query string, k int32, threshoad float32) Predictions {
+	r := C.FastText_Predict(handle.p, C.FastText_String_t{
+		data: C.CString(query),
+		size: C.size_t(len(query)),
+	}, C.int(k), C.float(threshoad))
 	defer C.FastText_FreePredict(r)
 
 	predictions := make(Predictions, r.size)
@@ -82,11 +109,8 @@ func (handle Model) Predict(query string) Predictions {
 // }
 
 func (handle Model) Wordvec(word string) []float32 {
-	cquery := C.CString(word)
-	defer C.free(unsafe.Pointer(cquery))
-
 	r := C.FastText_Wordvec(handle.p, C.FastText_String_t{
-		data: cquery,
+		data: C.CString(word),
 		size: C.size_t(len(word)),
 	})
 	defer C.FastText_FreeFloatVector(r)
@@ -99,11 +123,8 @@ func (handle Model) Wordvec(word string) []float32 {
 
 // Requires sentence ends with </s>
 func (handle Model) Sentencevec(query string) []float32 {
-	cquery := C.CString(query)
-	defer C.free(unsafe.Pointer(cquery))
-
 	r := C.FastText_Sentencevec(handle.p, C.FastText_String_t{
-		data: cquery,
+		data: C.CString(query),
 		size: C.size_t(len(query)),
 	})
 
