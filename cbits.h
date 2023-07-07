@@ -1,13 +1,25 @@
 #pragma once
 
-#include <stdint.h>
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-    typedef void *FastTextHandle;
+    typedef void *FastText_Handle_t;
+
+    typedef struct
+    {
+        enum
+        {
+            SUCCESS = 0,
+            ERROR = 1,
+        } status;
+
+        union {
+            FastText_Handle_t handle;
+            char *error;
+        };
+    } FastText_Result_t;
 
     typedef struct
     {
@@ -34,15 +46,16 @@ extern "C"
         void *data;
     } FastText_Predict_t;
 
-    FastTextHandle FastText_NewHandle(const char *path);
-    void FastText_DeleteHandle(const FastTextHandle handle);
-    FastText_Predict_t FastText_Predict(const FastTextHandle handle, FastText_String_t query, int k, float threshold);
-    FastText_Predict_t FastText_PredictOne(const FastTextHandle handle, FastText_String_t query, float threshold);
+    FastText_Result_t FastText_NewHandle(const char *path);
+    void FastText_DeleteHandle(const FastText_Handle_t handle);
+    FastText_Predict_t FastText_Predict(const FastText_Handle_t handle, FastText_String_t query, int k,
+                                        float threshold);
+    FastText_Predict_t FastText_PredictOne(const FastText_Handle_t handle, FastText_String_t query, float threshold);
 
-    FastText_FloatVector_t FastText_Wordvec(const FastTextHandle handle, FastText_String_t word);
-    FastText_FloatVector_t FastText_Sentencevec(const FastTextHandle handle, FastText_String_t sentance);
+    FastText_FloatVector_t FastText_Wordvec(const FastText_Handle_t handle, FastText_String_t word);
+    FastText_FloatVector_t FastText_Sentencevec(const FastText_Handle_t handle, FastText_String_t sentance);
 
-    // char *FastText_Analogy(const FastTextHandle handle, FastText_String_t query);
+    // char *FastText_Analogy(const FastText_Handle_t handle, FastText_String_t query);
 
     void FastText_FreeFloatVector(FastText_FloatVector_t vector);
     void FastText_FreePredict(FastText_Predict_t predict);

@@ -1,6 +1,6 @@
 package fasttext
 
-// #cgo CXXFLAGS: -I${SRCDIR}/fastText/src -I${SRCDIR} -I${SRCDIR}/include -std=c++17 -O3 -fPIC
+// #cgo CXXFLAGS: -I${SRCDIR}/fastText/src -I${SRCDIR} -I${SRCDIR}/include -std=c++17 -O3 -fPIC -pthread -march=native
 // #cgo LDFLAGS: -lstdc++
 // #include <stdio.h>
 // #include <stdlib.h>
@@ -15,18 +15,38 @@ import (
 // A model object. Effectively a wrapper
 // around the C fasttext handle
 type Model struct {
-	p C.FastTextHandle
+	p C.FastText_Handle_t
+}
+
+type ModelOpenError struct {
+	val string
+}
+
+func (e *ModelOpenError) Error() string {
+	return e.val
 }
 
 // Opens a model from a path and returns a model
 // object
-func Open(path string) Model {
+func Open(path string) (Model, error) {
 	cpath := C.CString(path)
 	defer C.free(unsafe.Pointer(cpath))
 
-	return Model{
-		p: C.FastText_NewHandle(cpath),
+	result := C.FastText_NewHandle(cpath)
+
+	if result.status != 0 {
+		ch := *(**C.char)(unsafe.Pointer(&result.anon0[0]))
+		defer C.free(unsafe.Pointer(ch))
+		return Model{}, &ModelOpenError{
+			val: C.GoString(ch),
+		}
 	}
+
+	handle := *(*C.FastText_Handle_t)(unsafe.Pointer(&result.anon0[0]))
+
+	return Model{
+		p: handle,
+	}, nil
 }
 
 // Closes a model handle
@@ -38,7 +58,7 @@ func (handle *Model) Close() error {
 	return nil
 }
 
-func (handle Model) MultiLinePredict(query string, k int32, threshoad float32 ) []Predictions {
+func (handle Model) MultiLinePredict(query string, k int32, threshoad float32) []Predictions {
 	lines := strings.Split(query, "\n")
 
 	predics := make([]Predictions, 0, len(lines))

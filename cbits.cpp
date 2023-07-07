@@ -1,24 +1,30 @@
 #include <algorithm>
+#include <iomanip>
 #include <iostream>
 #include <istream>
 #include <memory>
+#include <queue>
+#include <stdexcept>
 #include <streambuf>
 
+#include <stdlib.h>
+
+#include <loss.cc>
+
+#include <args.cc>
 #include <autotune.cc>
+#include <densematrix.cc>
 #include <dictionary.cc>
-#include <fasttext.cc>
+
 #include <matrix.cc>
 #include <meter.cc>
 #include <model.cc>
 #include <productquantizer.cc>
 #include <quantmatrix.cc>
-#include <real.h>
 #include <utils.cc>
 #include <vector.cc>
 
 #include "cbits.h"
-
-#include <stdlib.h>
 
 struct membuf : std::streambuf
 {
@@ -28,14 +34,28 @@ struct membuf : std::streambuf
     }
 };
 
-FastTextHandle FastText_NewHandle(const char *path)
+FastText_Result_t FastText_NewHandle(const char *path)
 {
     auto model = new fasttext::FastText();
-    model->loadModel(std::string(path));
-    return reinterpret_cast<FastTextHandle>(model);
+
+    try
+    {
+        model->loadModel(std::string(path));
+        return FastText_Result_t{
+            FastText_Result_t::SUCCESS,
+            (FastText_Handle_t)model,
+        };
+    }
+    catch (std::exception &e)
+    {
+        return FastText_Result_t{
+            FastText_Result_t::ERROR,
+            strdup(e.what()),
+        };
+    }
 }
 
-void FastText_DeleteHandle(const FastTextHandle handle)
+void FastText_DeleteHandle(const FastText_Handle_t handle)
 {
     if (handle != nullptr)
     {
@@ -46,12 +66,12 @@ void FastText_DeleteHandle(const FastTextHandle handle)
     delete model;
 }
 
-FastText_Predict_t FastText_PredictOne(const FastTextHandle handle, FastText_String_t query, float threshold)
+FastText_Predict_t FastText_PredictOne(const FastText_Handle_t handle, FastText_String_t query, float threshold)
 {
     return FastText_Predict(handle, query, 1, threshold);
 }
 
-FastText_Predict_t FastText_Predict(const FastTextHandle handle, FastText_String_t query, int k, float threshold)
+FastText_Predict_t FastText_Predict(const FastText_Handle_t handle, FastText_String_t query, int k, float threshold)
 {
     const auto model = reinterpret_cast<fasttext::FastText *>(handle);
 
@@ -72,7 +92,7 @@ FastText_Predict_t FastText_Predict(const FastTextHandle handle, FastText_String
     };
 }
 
-// char *FastText_Analogy(const FastTextHandle handle, const char *query, size_t length)
+// char *FastText_Analogy(const FastText_Handle_t handle, const char *query, size_t length)
 // {
 //     return "";
 
@@ -86,7 +106,7 @@ FastText_Predict_t FastText_Predict(const FastTextHandle handle, FastText_String
 //     // return strdup(res.dump().c_str());
 // }
 
-FastText_FloatVector_t FastText_Wordvec(const FastTextHandle handle, FastText_String_t word)
+FastText_FloatVector_t FastText_Wordvec(const FastText_Handle_t handle, FastText_String_t word)
 {
     const auto model = reinterpret_cast<fasttext::FastText *>(handle);
     int64_t dimensions = model->getDimension();
@@ -105,18 +125,18 @@ FastText_FloatVector_t FastText_Wordvec(const FastTextHandle handle, FastText_St
     };
 }
 
-FastText_FloatVector_t FastText_Sentencevec(const FastTextHandle handle, FastText_String_t sentance)
+FastText_FloatVector_t FastText_Sentencevec(const FastText_Handle_t handle, FastText_String_t sentence)
 {
     const auto model = reinterpret_cast<fasttext::FastText *>(handle);
 
-    membuf sbuf(sentance);
+    membuf sbuf(sentence);
     std::istream in(&sbuf);
 
     auto vec = new fasttext::Vector(model->getDimension());
     model->getSentenceVector(in, reinterpret_cast<fasttext::Vector &>(vec));
-    free(sentance.data);
-    sentance.data = nullptr;
-    sentance.size = 0;
+    free(sentence.data);
+    sentence.data = nullptr;
+    sentence.size = 0;
 
     return FastText_FloatVector_t{
         vec->data(),
