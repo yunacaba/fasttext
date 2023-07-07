@@ -3,15 +3,12 @@ package cmd
 import (
 	"fmt"
 
-	fasttext "github.com/bountylabs/go-fasttext"
 	"github.com/k0kubun/pp"
 	"github.com/spf13/cobra"
 	"github.com/unknwon/com"
-)
 
-// var (
-// 	unsupervisedModelPath string
-// )
+	"github.com/nano-interactive/go-fasttext"
+)
 
 // predictCmd represents the predict command
 var wordvecCmd = &cobra.Command{
@@ -20,20 +17,20 @@ var wordvecCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1), // make sure that there is only one argument being passed in
 	Run: func(cmd *cobra.Command, args []string) {
 		if !com.IsFile(unsupervisedModelPath) {
-			fmt.Println("the file %s does not exist", unsupervisedModelPath)
+			fmt.Printf("the file %s does not exist\n", unsupervisedModelPath)
 			return
 		}
 
 		// create a model object
-		model := fasttext.Open(unsupervisedModelPath)
+		model, err := fasttext.Open(modelPath)
+		if err != nil {
+      fmt.Println(err)
+      return
+    }
 		// close the model at the end
 		defer model.Close()
 		// perform the prediction
-		wordvec, err := model.Wordvec(args[0])
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
+		wordvec:= model.Wordvec(args[0])
 		pp.Println(wordvec)
 	},
 }
