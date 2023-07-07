@@ -4,8 +4,6 @@
 #include <memory>
 #include <streambuf>
 
-#include <json.hpp>
-
 #include <args.cc>
 #include <autotune.cc>
 #include <dictionary.cc>
@@ -20,8 +18,6 @@
 #include <vector.cc>
 
 #include "cbits.h"
-
-using json = nlohmann::json;
 
 #include <stdlib.h>
 
