@@ -18,7 +18,7 @@ func TestOpen(t *testing.T) {
 
 
 func TestPredictOne(t *testing.T) {
-
+  t.Parallel()
 	assert := require.New(t)
 
 	model, err := fasttext.Open("testdata/lid.176.ftz")
