@@ -11,6 +11,7 @@
       "ios": "cpp",
       "memory": "cpp",
       "utility": "cpp",
-      "iomanip": "cpp"
+      "iomanip": "cpp",
+      "cmath": "cpp"
     }
 }

@@ -5,9 +5,6 @@
 
 #include <json.hpp>
 
-#include <fasttext.h>
-#include <real.h>
-
 #include <args.cc>
 #include <autotune.cc>
 #include <dictionary.cc>
@@ -17,6 +14,7 @@
 #include <model.cc>
 #include <productquantizer.cc>
 #include <quantmatrix.cc>
+#include <real.h>
 #include <utils.cc>
 #include <vector.cc>
 
@@ -24,46 +22,39 @@
 
 using json = nlohmann::json;
 
+#include <stdlib.h>
+
 struct membuf : std::streambuf
 {
-    membuf(char *begin, char *end)
+    membuf(const char *begin, const char *end)
     {
-        this->setg(begin, begin, end);
+        this->setg((char *)begin, (char *)begin, (char *)end);
     }
 };
 
-template <class Dest, class Source> inline Dest bit_cast(Source const &source)
-{
-    static_assert(sizeof(Dest) == sizeof(Source), "size of destination and source objects must be equal");
-    static_assert(std::is_trivially_copyable<Dest>::value, "destination type must be trivially copyable.");
-    static_assert(std::is_trivially_copyable<Source>::value, "source type must be trivially copyable");
-
-    Dest dest;
-    std::memcpy(&dest, &source, sizeof(dest));
-    return dest;
-}
-
-FastTextHandle NewHandle(const char *path)
+FastTextHandle FastText_NewHandle(const char *path)
 {
     auto model = new fasttext::FastText();
     model->loadModel(std::string(path));
-    return bit_cast<FastTextHandle>(model);
+    return reinterpret_cast<FastTextHandle>(model);
 }
 
-void DeleteHandle(FastTextHandle handle)
+void FastText_DeleteHandle(const FastTextHandle handle)
 {
-    auto model = bit_cast<fasttext::FastText *>(handle);
-    if (model != nullptr)
+    if (handle != nullptr)
     {
-        delete model;
+        return;
     }
+
+    const auto model = reinterpret_cast<fasttext::FastText *>(handle);
+    delete model;
 }
 
-char *Predict(FastTextHandle handle, char *query)
+char *FastText_Predict(const FastTextHandle handle, const char *query, size_t length)
 {
-    auto model = bit_cast<fasttext::FastText *>(handle);
+    const auto model = reinterpret_cast<fasttext::FastText *>(handle);
 
-    membuf sbuf(query, query + strlen(query));
+    membuf sbuf(query, query + length);
     std::istream in(&sbuf);
 
     std::vector<std::pair<fasttext::real, std::string>> predictions;
@@ -84,11 +75,11 @@ char *Predict(FastTextHandle handle, char *query)
     return strdup(res.dump().c_str());
 }
 
-char *Analogy(FastTextHandle handle, char *query)
+char *FastText_Analogy(const FastTextHandle handle, const char *query, size_t length)
 {
     return "";
 
-    // auto model = bit_cast<fasttext::FastText *>(handle);
+    // auto model = reinterpret_cast<fasttext::FastText *>(handle);
 
     // model->getAnalogies(1, query, 10);
 
@@ -98,39 +89,40 @@ char *Analogy(FastTextHandle handle, char *query)
     // return strdup(res.dump().c_str());
 }
 
-char *Wordvec(FastTextHandle handle, char *query)
+FastText_FloatVector_t FastText_Wordvec(const FastTextHandle handle, const char *word, size_t length)
 {
-    auto model = bit_cast<fasttext::FastText *>(handle);
+    const auto model = reinterpret_cast<fasttext::FastText *>(handle);
+    int64_t dimensions = model->getDimension();
 
-    fasttext::Vector vec(model->getDimension());
-    // fasttext::Matrix wordVectors(model->dict_->nwords(), model->getDimension());
-    // model->precomputeWordVectors(wordVectors);
-    model->getWordVector(vec, query);
+    auto vec = new fasttext::Vector(dimensions);
+    model->getWordVector(reinterpret_cast<fasttext::Vector &>(vec), word);
 
-    auto res = json::array();
-    for (int i = 0; i < vec.size(); i++)
-    {
-        res.push_back(vec[i]);
-    }
-
-    return strdup(res.dump().c_str());
+    return FastText_FloatVector_t{
+        vec->data(),
+        (void *)vec,
+        (size_t)vec->size(),
+    };
 }
 
-char *Sentencevec(FastTextHandle handle, char *query)
+FastText_FloatVector_t FastText_Sentencevec(const FastTextHandle handle, const char *sentance, size_t length)
 {
-    auto model = bit_cast<fasttext::FastText *>(handle);
+    const auto model = reinterpret_cast<fasttext::FastText *>(handle);
 
-    membuf sbuf(query, query + strlen(query));
+    membuf sbuf(sentance, sentance + length);
     std::istream in(&sbuf);
 
-    fasttext::Vector vec(model->getDimension());
-    model->getSentenceVector(in, vec);
+    auto vec = new fasttext::Vector(model->getDimension());
+    model->getSentenceVector(in, reinterpret_cast<fasttext::Vector &>(vec));
 
-    auto res = json::array();
-    for (int i = 0; i < vec.size(); i++)
-    {
-        res.push_back(vec[i]);
-    }
+    return FastText_FloatVector_t{
+        vec->data(),
+        (void *)vec,
+        (size_t)vec->size(),
+    };
+}
 
-    return strdup(res.dump().c_str());
+void FastText_FreeFloatVector(FastText_FloatVector_t vector)
+{
+    auto vec = reinterpret_cast<fasttext::Vector *>(vector.handle);
+    delete vec;
 }

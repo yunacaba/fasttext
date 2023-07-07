@@ -30,11 +30,7 @@ var analogyCmd = &cobra.Command{
 		// close the model at the end
 		defer model.Close()
 		// perform the prediction
-		analogies, err := model.Analogy(args[0])
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
+		analogies := model.Analogy(args[0])
 		pp.Println(analogies)
 	},
 }

@@ -1,15 +1,16 @@
 package main
 
 import (
-  "os"
-  "bufio"
-  "log"
-  "fmt"
-  "strings"
-  "strconv"
-  "sort"
-  "math"
-  "gonum.org/v1/gonum/mat"
+	"bufio"
+	"fmt"
+	"log"
+	"math"
+	"os"
+	"sort"
+	"strconv"
+	"strings"
+
+	"gonum.org/v1/gonum/mat"
 )
 
 type Pair struct {
@@ -161,8 +162,6 @@ func main() {
           fmt.Printf("%s: %f\n", testfile[i], float64(numer)/float64(denom))
         }
       }
-    }
-    if os.Args[1] == "nn"{
     }
   }
 }

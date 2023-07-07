@@ -26,11 +26,7 @@ var wordvecCmd = &cobra.Command{
 		// close the model at the end
 		defer model.Close()
 		// perform the prediction
-		wordvec, err := model.Wordvec(args[0])
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
+		wordvec:= model.Wordvec(args[0])
 		pp.Println(wordvec)
 	},
 }
