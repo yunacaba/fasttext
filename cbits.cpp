@@ -79,8 +79,7 @@ FastText_Predict_t FastText_Predict(const FastText_Handle_t handle, FastText_Str
     std::istream in(&sbuf);
 
     auto predictions = new std::vector<std::pair<fasttext::real, std::string>>();
-    model->predictLine(in, reinterpret_cast<std::vector<std::pair<fasttext::real, std::string>> &>(predictions), k,
-                       threshold);
+    model->predictLine(in, *predictions, k, threshold);
 
     free(query.data);
     query.data = nullptr;
@@ -112,7 +111,7 @@ FastText_FloatVector_t FastText_Wordvec(const FastText_Handle_t handle, FastText
     int64_t dimensions = model->getDimension();
 
     auto vec = new fasttext::Vector(dimensions);
-    model->getWordVector(reinterpret_cast<fasttext::Vector &>(vec), std::string(word.data, word.size));
+    model->getWordVector(*vec, std::string(word.data, word.size));
 
     free(word.data);
     word.data = nullptr;
@@ -133,7 +132,7 @@ FastText_FloatVector_t FastText_Sentencevec(const FastText_Handle_t handle, Fast
     std::istream in(&sbuf);
 
     auto vec = new fasttext::Vector(model->getDimension());
-    model->getSentenceVector(in, reinterpret_cast<fasttext::Vector &>(vec));
+    model->getSentenceVector(in, *vec);
     free(sentence.data);
     sentence.data = nullptr;
     sentence.size = 0;
@@ -163,12 +162,12 @@ FastText_PredictItem_t FastText_PredictItemAt(FastText_Predict_t predict, size_t
     const auto &data = vec->at(idx);
 
     auto str = FastText_String_t{
-        data.second.size(),
-        (char *)data.second.c_str(),
+        data.second.size() - sizeof("__label__") + 1,
+        (char *)(data.second.c_str() + sizeof("__label__") - 1),
     };
 
     return FastText_PredictItem_t{
-        std::exp(data.first),
+        data.first,
         str,
     };
 }

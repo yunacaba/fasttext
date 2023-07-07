@@ -72,11 +72,8 @@ func (handle Model) MultiLinePredict(query string, k int32, threshoad float32) [
 }
 
 func (handle Model) PredictOne(query string, threshoad float32) Prediction {
-	cquery := C.CString(query)
-	defer C.free(unsafe.Pointer(cquery))
-
 	r := C.FastText_PredictOne(handle.p, C.FastText_String_t{
-		data: cquery,
+		data:  C.CString(query),
 		size: C.size_t(len(query)),
 	}, C.float(threshoad))
 	defer C.FastText_FreePredict(r)
