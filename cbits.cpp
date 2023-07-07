@@ -10,12 +10,10 @@
 #include <stdlib.h>
 
 #include <loss.cc>
-
 #include <args.cc>
 #include <autotune.cc>
 #include <densematrix.cc>
 #include <dictionary.cc>
-
 #include <matrix.cc>
 #include <meter.cc>
 #include <model.cc>

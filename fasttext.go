@@ -1,6 +1,6 @@
 package fasttext
 
-// #cgo CXXFLAGS: -I${SRCDIR}/fastText/src -I${SRCDIR} -I${SRCDIR}/include -std=c++17 -O3 -fPIC -pthread -march=native
+// #cgo CXXFLAGS: -I${SRCDIR}/fastText-src -I${SRCDIR} -std=c++17 -O3 -fPIC -pthread -march=native
 // #cgo LDFLAGS: -lstdc++
 // #include <stdio.h>
 // #include <stdlib.h>

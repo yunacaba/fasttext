@@ -25,3 +25,6 @@ clean:
 run:
 	$(GOBUILD) -o $(BINARY_NAME) -v ./...
 	./$(BINARY_NAME)
+
+copy-fastText:
+	cp -r $(PWD)/fastText/src/* ./fastText-src/
