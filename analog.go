@@ -7,7 +7,6 @@ import (
 
 type Analog struct {
 	Name        string  `json:"name"`
-	Index       int     `json:"index"`
 	Probability float32 `json:"probability"`
 }
 

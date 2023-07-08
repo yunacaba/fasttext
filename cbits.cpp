@@ -9,11 +9,11 @@
 
 #include <stdlib.h>
 
-#include <loss.cc>
 #include <args.cc>
 #include <autotune.cc>
 #include <densematrix.cc>
 #include <dictionary.cc>
+#include <loss.cc>
 #include <matrix.cc>
 #include <meter.cc>
 #include <model.cc>
@@ -23,6 +23,20 @@
 #include <vector.cc>
 
 #include "cbits.h"
+
+#define FREE_STRING(str)                                                                                               \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        if (str.data != nullptr)                                                                                       \
+            free(str.data);                                                                                            \
+        str.data = nullptr;                                                                                            \
+        str.size = 0;                                                                                                  \
+    } while (0)
+
+#define LABEL_PREFIX ("__label__")
+#define LABEL_PREFIX_SIZE (sizeof(LABEL_PREFIX) - 1)
+
+using Predictions = std::vector<std::pair<fasttext::real, std::string>>;
 
 struct membuf : std::streambuf
 {
@@ -76,12 +90,9 @@ FastText_Predict_t FastText_Predict(const FastText_Handle_t handle, FastText_Str
     membuf sbuf(query);
     std::istream in(&sbuf);
 
-    auto predictions = new std::vector<std::pair<fasttext::real, std::string>>();
+    auto predictions = new Predictions((size_t)k);
     model->predictLine(in, *predictions, k, threshold);
-
-    free(query.data);
-    query.data = nullptr;
-    query.size = 0;
+    FREE_STRING(query);
 
     return FastText_Predict_t{
         predictions->size(),
@@ -89,19 +100,23 @@ FastText_Predict_t FastText_Predict(const FastText_Handle_t handle, FastText_Str
     };
 }
 
-// char *FastText_Analogy(const FastText_Handle_t handle, const char *query, size_t length)
-// {
-//     return "";
+FastText_Predict_t FastText_Analogy(const FastText_Handle_t handle, FastText_String_t word1, FastText_String_t word2,
+                                    FastText_String_t word3, int32_t k)
+{
+    const auto model = reinterpret_cast<fasttext::FastText *>(handle);
+    Predictions predictions = model->getAnalogies(k, word1.data, word2.data, word3.data);
 
-//     // auto model = reinterpret_cast<fasttext::FastText *>(handle);
+    FREE_STRING(word1);
+    FREE_STRING(word2);
+    FREE_STRING(word3);
 
-//     // model->getAnalogies(1, query, 10);
+    auto vec = new Predictions(std::move(predictions));
 
-//     // size_t ii = 0;
-//     // auto res = json::array();
-
-//     // return strdup(res.dump().c_str());
-// }
+    return FastText_Predict_t{
+        vec->size(),
+        (void *)vec,
+    };
+}
 
 FastText_FloatVector_t FastText_Wordvec(const FastText_Handle_t handle, FastText_String_t word)
 {
@@ -109,11 +124,8 @@ FastText_FloatVector_t FastText_Wordvec(const FastText_Handle_t handle, FastText
     int64_t dimensions = model->getDimension();
 
     auto vec = new fasttext::Vector(dimensions);
-    model->getWordVector(*vec, std::string(word.data, word.size));
-
-    free(word.data);
-    word.data = nullptr;
-    word.size = 0;
+    model->getWordVector(*vec, word.data);
+    FREE_STRING(word);
 
     return FastText_FloatVector_t{
         vec->data(),
@@ -131,9 +143,7 @@ FastText_FloatVector_t FastText_Sentencevec(const FastText_Handle_t handle, Fast
 
     auto vec = new fasttext::Vector(model->getDimension());
     model->getSentenceVector(in, *vec);
-    free(sentence.data);
-    sentence.data = nullptr;
-    sentence.size = 0;
+    FREE_STRING(sentence);
 
     return FastText_FloatVector_t{
         vec->data(),
@@ -150,18 +160,18 @@ void FastText_FreeFloatVector(FastText_FloatVector_t vector)
 
 void FastText_FreePredict(FastText_Predict_t predict)
 {
-    auto vec = reinterpret_cast<std::vector<std::pair<fasttext::real, std::string>> *>(predict.data);
+    auto vec = reinterpret_cast<Predictions *>(predict.data);
     delete vec;
 }
 
 FastText_PredictItem_t FastText_PredictItemAt(FastText_Predict_t predict, size_t idx)
 {
-    const auto vec = reinterpret_cast<std::vector<std::pair<fasttext::real, std::string>> *>(predict.data);
+    const auto vec = reinterpret_cast<Predictions *>(predict.data);
     const auto &data = vec->at(idx);
 
     auto str = FastText_String_t{
-        data.second.size() - sizeof("__label__") + 1,
-        (char *)(data.second.c_str() + sizeof("__label__") - 1),
+        data.second.size() - (LABEL_PREFIX_SIZE),
+        (char *)(data.second.c_str() + LABEL_PREFIX_SIZE),
     };
 
     return FastText_PredictItem_t{

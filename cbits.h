@@ -11,20 +11,6 @@ extern "C"
 
     typedef struct
     {
-        enum
-        {
-            SUCCESS = 0,
-            ERROR = 1,
-        } status;
-
-        union {
-            FastText_Handle_t handle;
-            char *error;
-        };
-    } FastText_Result_t;
-
-    typedef struct
-    {
         float *data;
         void *handle;
         size_t size;
@@ -48,16 +34,29 @@ extern "C"
         void *data;
     } FastText_Predict_t;
 
+    typedef struct
+    {
+        enum
+        {
+            SUCCESS = 0,
+            ERROR = 1,
+        } status;
+
+        union {
+            FastText_Handle_t handle;
+            char *error;
+        };
+    } FastText_Result_t;
+
     FastText_Result_t FastText_NewHandle(const char *path);
     void FastText_DeleteHandle(const FastText_Handle_t handle);
     FastText_Predict_t FastText_Predict(const FastText_Handle_t handle, FastText_String_t query, int k,
                                         float threshold);
     FastText_Predict_t FastText_PredictOne(const FastText_Handle_t handle, FastText_String_t query, float threshold);
-
     FastText_FloatVector_t FastText_Wordvec(const FastText_Handle_t handle, FastText_String_t word);
     FastText_FloatVector_t FastText_Sentencevec(const FastText_Handle_t handle, FastText_String_t sentance);
-
-    // char *FastText_Analogy(const FastText_Handle_t handle, FastText_String_t query);
+    FastText_Predict_t FastText_Analogy(const FastText_Handle_t handle, FastText_String_t word1,
+                                        FastText_String_t word2, FastText_String_t word3, int32_t k);
 
     void FastText_FreeFloatVector(FastText_FloatVector_t vector);
     void FastText_FreePredict(FastText_Predict_t predict);
