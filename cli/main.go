@@ -1,6 +1,6 @@
 package main
 
-import "github.com/bountylabs/go-fasttext/cmd"
+import "github.com/nano-interactive/go-fasttext/cmd"
 
 func main() {
   cmd.Execute()

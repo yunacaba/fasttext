@@ -3,10 +3,11 @@ package cmd
 import (
 	"fmt"
 
-	fasttext "github.com/bountylabs/go-fasttext"
 	"github.com/k0kubun/pp"
 	"github.com/spf13/cobra"
 	"github.com/unknwon/com"
+
+	"github.com/nano-interactive/go-fasttext"
 )
 
 var (
@@ -20,20 +21,21 @@ var predictCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1), // make sure that there is only one argument being passed in
 	Run: func(cmd *cobra.Command, args []string) {
 		if !com.IsFile(modelPath) {
-			fmt.Println("the file %s does not exist", modelPath)
+			fmt.Printf("the file %s does not exist\n", modelPath)
 			return
 		}
 
 		// create a model object
-		model := fasttext.Open(modelPath)
-		// close the model at the end
+		model, err := fasttext.Open(modelPath)
+		if err != nil {
+      fmt.Println(err)
+      return
+    }
+
+    // close the model at the end
 		defer model.Close()
 		// perform the prediction
-		preds, err := model.Predict(args[0])
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
+		preds := model.Predict(args[0], 1, 0.0)
 		pp.Println(preds)
 	},
 }

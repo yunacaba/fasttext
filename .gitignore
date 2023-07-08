@@ -36,7 +36,6 @@ vendor
 *.pprof
 debug
 
-
 # Created by https://www.gitignore.io/api/go,vim,c++,java,cuda,python,eclipse,intellij,sublimetext,visualstudio,visualstudiocode
 
 ### C++ ###
@@ -687,5 +686,6 @@ paket-files/
 
 # End of https://www.gitignore.io/api/go,vim,c++,java,cuda,python,eclipse,intellij,sublimetext,visualstudio,visualstudiocode
 
-
 main
+
+fast_bind

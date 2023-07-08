@@ -1,0 +1,25 @@
+name: 'Tests'
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+jobs:
+  tests:
+    strategy:
+      matrix:
+        go: [ '1.20' ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go }}
+      - name: Set up gotestfmt
+        run: go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt@latest
+      - name: Run tests
+        run: go test -covermode=atomic -coverprofile=coverage.txt -timeout 5m -json -v ./... | gotestfmt -showteststatus
