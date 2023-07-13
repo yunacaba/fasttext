@@ -20,16 +20,16 @@ var (
 
 // A model object. Effectively a wrapper
 // around the C fasttext handle
-type Model struct {
-	p C.FastText_Handle_t
-}
+type (
+	Model struct {
+		p C.FastText_Handle_t
+	}
 
-type ModelOpenError struct {
-	val string
-}
+	ModelOpenError string
+)
 
-func (e *ModelOpenError) Error() string {
-	return e.val
+func (e ModelOpenError) Error() string {
+	return string(e)
 }
 
 // Opens a model from a path and returns a model
@@ -43,9 +43,7 @@ func Open(path string) (Model, error) {
 	if result.status != 0 {
 		ch := *(**C.char)(unsafe.Pointer(&result.anon0[0]))
 		defer C.free(unsafe.Pointer(ch))
-		return Model{}, &ModelOpenError{
-			val: C.GoString(ch),
-		}
+		return Model{}, ModelOpenError(C.GoString(ch))
 	}
 
 	handle := *(*C.FastText_Handle_t)(unsafe.Pointer(&result.anon0[0]))

@@ -46,6 +46,7 @@ struct membuf : std::streambuf
     }
 };
 
+BEGIN_EXTERN_C()
 FastText_Result_t FastText_NewHandle(FastText_String_t path)
 {
     auto model = new fasttext::FastText();
@@ -179,3 +180,5 @@ FastText_PredictItem_t FastText_PredictItemAt(FastText_Predict_t predict, size_t
         str,
     };
 }
+
+END_EXTERN_C()
