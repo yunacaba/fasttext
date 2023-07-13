@@ -19,12 +19,12 @@ func TestOpen(t *testing.T) {
 		assert.NoError(model.Close())
 	})
 
-  t.Run("FailedToOpen", func(t *testing.T) {
-    model, err := fasttext.Open("testdata/lid-not-found.176.ftz")
+	t.Run("FailedToOpen", func(t *testing.T) {
+		model, err := fasttext.Open("testdata/lid-not-found.176.ftz")
 
 		assert.EqualError(err, "testdata/lid-not-found.176.ftz cannot be opened for loading!")
 		assert.Empty(model)
-  })
+	})
 }
 
 func TestPredictOne(t *testing.T) {

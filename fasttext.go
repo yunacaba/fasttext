@@ -4,6 +4,7 @@ package fasttext
 // #cgo LDFLAGS: -lstdc++
 // #include <stdio.h>
 // #include <stdlib.h>
+// #include <stdint.h>
 // #include "cbits.h"
 import "C"
 
@@ -119,7 +120,7 @@ func (handle Model) Predict(query string, k int32, threshoad float32) (Predictio
 			data: cStr(query),
 			size: C.size_t(len(query)),
 		},
-		C.int(k),
+		C.uint32_t(k),
 		C.float(threshoad),
 	)
 
@@ -164,7 +165,7 @@ func (handle Model) Analogy(word1, word2, word3 string, k int32) Analogs {
 			data: cStr(word3),
 			size: C.size_t(len(word3)),
 		},
-		C.int32_t(k),
+		C.uint32_t(k),
 	)
 
 	defer C.FastText_FreePredict(r)

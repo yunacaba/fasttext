@@ -78,7 +78,8 @@ void FastText_DeleteHandle(const FastText_Handle_t handle)
     delete model;
 }
 
-FastText_Predict_t FastText_Predict(const FastText_Handle_t handle, FastText_String_t query, int k, float threshold)
+FastText_Predict_t FastText_Predict(const FastText_Handle_t handle, FastText_String_t query, uint32_t k,
+                                    float threshold)
 {
     const auto model = reinterpret_cast<fasttext::FastText *>(handle);
 
@@ -103,7 +104,7 @@ FastText_Predict_t FastText_Predict(const FastText_Handle_t handle, FastText_Str
 }
 
 FastText_Predict_t FastText_Analogy(const FastText_Handle_t handle, FastText_String_t word1, FastText_String_t word2,
-                                    FastText_String_t word3, int32_t k)
+                                    FastText_String_t word3, uint32_t k)
 {
     const auto model = reinterpret_cast<fasttext::FastText *>(handle);
     Predictions predictions =
