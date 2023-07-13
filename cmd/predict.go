@@ -35,8 +35,12 @@ var predictCmd = &cobra.Command{
     // close the model at the end
 		defer model.Close()
 		// perform the prediction
-		preds := model.Predict(args[0], 1, 0.0)
-		pp.Println(preds)
+		preds, err := model.Predict(args[0], 1, 0.0)
+		if err != nil {
+      pp.Fatalln(err)
+      return
+    }
+    pp.Println(preds)
 	},
 }
 

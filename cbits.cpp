@@ -46,13 +46,13 @@ struct membuf : std::streambuf
     }
 };
 
-FastText_Result_t FastText_NewHandle(const char *path)
+FastText_Result_t FastText_NewHandle(FastText_String_t path)
 {
     auto model = new fasttext::FastText();
 
     try
     {
-        model->loadModel(std::string(path));
+        model->loadModel(std::string(path.data, path.size));
         return FastText_Result_t{
             FastText_Result_t::SUCCESS,
             (FastText_Handle_t)model,
@@ -78,11 +78,6 @@ void FastText_DeleteHandle(const FastText_Handle_t handle)
     delete model;
 }
 
-FastText_Predict_t FastText_PredictOne(const FastText_Handle_t handle, FastText_String_t query, float threshold)
-{
-    return FastText_Predict(handle, query, 1, threshold);
-}
-
 FastText_Predict_t FastText_Predict(const FastText_Handle_t handle, FastText_String_t query, int k, float threshold)
 {
     const auto model = reinterpret_cast<fasttext::FastText *>(handle);
@@ -90,9 +85,16 @@ FastText_Predict_t FastText_Predict(const FastText_Handle_t handle, FastText_Str
     membuf sbuf(query);
     std::istream in(&sbuf);
 
-    auto predictions = new Predictions((size_t)k);
-    model->predictLine(in, *predictions, k, threshold);
-    FREE_STRING(query);
+    auto predictions = new Predictions();
+    if (!model->predictLine(in, *predictions, k, threshold))
+    {
+        delete predictions;
+
+        return FastText_Predict_t{
+            0,
+            nullptr,
+        };
+    }
 
     return FastText_Predict_t{
         predictions->size(),
@@ -104,11 +106,9 @@ FastText_Predict_t FastText_Analogy(const FastText_Handle_t handle, FastText_Str
                                     FastText_String_t word3, int32_t k)
 {
     const auto model = reinterpret_cast<fasttext::FastText *>(handle);
-    Predictions predictions = model->getAnalogies(k, word1.data, word2.data, word3.data);
-
-    FREE_STRING(word1);
-    FREE_STRING(word2);
-    FREE_STRING(word3);
+    Predictions predictions =
+        model->getAnalogies(k, std::string(word1.data, word1.size), std::string(word2.data, word2.size),
+                            std::string(word3.data, word3.size));
 
     auto vec = new Predictions(std::move(predictions));
 
@@ -124,8 +124,7 @@ FastText_FloatVector_t FastText_Wordvec(const FastText_Handle_t handle, FastText
     int64_t dimensions = model->getDimension();
 
     auto vec = new fasttext::Vector(dimensions);
-    model->getWordVector(*vec, word.data);
-    FREE_STRING(word);
+    model->getWordVector(*vec, std::string(word.data, word.size));
 
     return FastText_FloatVector_t{
         vec->data(),

@@ -8,8 +8,13 @@ package fasttext
 import "C"
 
 import (
-	"strings"
+	"errors"
 	"unsafe"
+)
+
+var (
+	ErrPredictionFailed = errors.New("prediction failed")
+	ErrNoPredictions    = errors.New("no predictions")
 )
 
 // A model object. Effectively a wrapper
@@ -29,10 +34,10 @@ func (e *ModelOpenError) Error() string {
 // Opens a model from a path and returns a model
 // object
 func Open(path string) (Model, error) {
-	cpath := C.CString(path)
-	defer C.free(unsafe.Pointer(cpath))
-
-	result := C.FastText_NewHandle(cpath)
+	result := C.FastText_NewHandle(C.FastText_String_t{
+		data: cStr(path),
+		size: C.size_t(len(path)),
+	})
 
 	if result.status != 0 {
 		ch := *(**C.char)(unsafe.Pointer(&result.anon0[0]))
@@ -58,49 +63,75 @@ func (handle *Model) Close() error {
 	return nil
 }
 
-func (handle Model) MultiLinePredict(query string, k int32, threshoad float32) []Predictions {
-	lines := strings.Split(query, "\n")
-
+func (handle Model) MultiLinePredict(lines []string, k int32, threshoad float32) ([]Predictions, error) {
 	predics := make([]Predictions, 0, len(lines))
 
 	for _, line := range lines {
-		predictions := handle.Predict(line, k, threshoad)
+		predictions, err := handle.Predict(line, k, threshoad)
+		if err != nil && errors.Is(err, ErrPredictionFailed) {
+			return nil, err
+		}
+
 		predics = append(predics, predictions)
 	}
 
-	return predics
+	if len(predics) == 0 {
+		return nil, ErrNoPredictions
+	}
+
+	return predics, nil
 }
 
-func (handle Model) PredictOne(query string, threshoad float32) Prediction {
-	r := C.FastText_PredictOne(
+func (handle Model) PredictOne(query string, threshoad float32) (Prediction, error) {
+	r := C.FastText_Predict(
 		handle.p,
 		C.FastText_String_t{
-			data: C.CString(query),
+			data: cStr(query),
+			size: C.size_t(len(query)),
 		},
+		1,
 		C.float(threshoad),
 	)
+
+	if r.data == nil {
+		return Prediction{}, ErrPredictionFailed
+	}
+
 	defer C.FastText_FreePredict(r)
+
+	if r.size == 0 {
+		return Prediction{}, ErrNoPredictions
+	}
 
 	cPredic := C.FastText_PredictItemAt(r, C.size_t(0))
 
 	return Prediction{
 		Label:       C.GoStringN(cPredic.label.data, C.int(cPredic.label.size)),
 		Probability: float32(cPredic.probability),
-	}
+	}, nil
 }
 
 // Perform model prediction
-func (handle Model) Predict(query string, k int32, threshoad float32) Predictions {
+func (handle Model) Predict(query string, k int32, threshoad float32) (Predictions, error) {
 	r := C.FastText_Predict(
 		handle.p,
 		C.FastText_String_t{
-			data: C.CString(query),
+			data: cStr(query),
 			size: C.size_t(len(query)),
 		},
 		C.int(k),
 		C.float(threshoad),
 	)
+
+	if r.data == nil {
+		return nil, ErrPredictionFailed
+	}
+
 	defer C.FastText_FreePredict(r)
+
+	if r.size == 0 {
+		return nil, ErrNoPredictions
+	}
 
 	predictions := make(Predictions, r.size)
 
@@ -113,20 +144,25 @@ func (handle Model) Predict(query string, k int32, threshoad float32) Prediction
 		}
 	}
 
-	return predictions
+	return predictions, nil
 }
 
 func (handle Model) Analogy(word1, word2, word3 string, k int32) Analogs {
+	// cWord1 := ((*C.char) unsafe.Pointer(unsafe.StringData(word1)))
+
 	r := C.FastText_Analogy(
 		handle.p,
 		C.FastText_String_t{
-			data: C.CString(word1),
+			data: cStr(word1),
+			size: C.size_t(len(word1)),
 		},
 		C.FastText_String_t{
-			data: C.CString(word2),
+			data: cStr(word2),
+			size: C.size_t(len(word2)),
 		},
 		C.FastText_String_t{
-			data: C.CString(word3),
+			data: cStr(word3),
+			size: C.size_t(len(word3)),
 		},
 		C.int32_t(k),
 	)
@@ -151,7 +187,8 @@ func (handle Model) Wordvec(word string) []float32 {
 	r := C.FastText_Wordvec(
 		handle.p,
 		C.FastText_String_t{
-			data: C.CString(word),
+			data: cStr(word),
+			size: C.size_t(len(word)),
 		},
 	)
 	defer C.FastText_FreeFloatVector(r)
@@ -165,7 +202,7 @@ func (handle Model) Wordvec(word string) []float32 {
 // Requires sentence ends with </s>
 func (handle Model) Sentencevec(query string) []float32 {
 	r := C.FastText_Sentencevec(handle.p, C.FastText_String_t{
-		data: C.CString(query),
+		data: cStr(query),
 		size: C.size_t(len(query)),
 	})
 
@@ -175,4 +212,9 @@ func (handle Model) Sentencevec(query string) []float32 {
 	copy(vectors, unsafe.Slice((*float32)(unsafe.Pointer(r.data)), r.size))
 
 	return vectors
+}
+
+//go:inline
+func cStr(str string) *C.char {
+	return ((*C.char)(unsafe.Pointer(unsafe.StringData(str))))
 }

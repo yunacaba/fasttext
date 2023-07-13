@@ -48,11 +48,10 @@ extern "C"
         };
     } FastText_Result_t;
 
-    FastText_Result_t FastText_NewHandle(const char *path);
+    FastText_Result_t FastText_NewHandle(FastText_String_t path);
     void FastText_DeleteHandle(const FastText_Handle_t handle);
     FastText_Predict_t FastText_Predict(const FastText_Handle_t handle, FastText_String_t query, int k,
                                         float threshold);
-    FastText_Predict_t FastText_PredictOne(const FastText_Handle_t handle, FastText_String_t query, float threshold);
     FastText_FloatVector_t FastText_Wordvec(const FastText_Handle_t handle, FastText_String_t word);
     FastText_FloatVector_t FastText_Sentencevec(const FastText_Handle_t handle, FastText_String_t sentance);
     FastText_Predict_t FastText_Analogy(const FastText_Handle_t handle, FastText_String_t word1,
