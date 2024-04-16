@@ -65,24 +65,24 @@ func (handle *Model) Close() error {
 	return nil
 }
 
-// func (handle *Model) MultiLinePredict(lines []string, k int32, threshoad float32) ([]Predictions, error) {
-// 	predics := make([]Predictions, 0, len(lines))
+func (handle *Model) MultiLinePredict(lines []string, k int32, threshoad float32) ([]Predictions, error) {
+	predics := make([]Predictions, 0, len(lines))
 
-// 	for _, line := range lines {
-// 		predictions, err := handle.Predict(line, k, threshoad)
-// 		if err != nil && errors.Is(err, ErrPredictionFailed) {
-// 			return nil, err
-// 		}
+	for _, line := range lines {
+		predictions, err := handle.Predict(line, k, threshoad)
+		if err != nil && errors.Is(err, ErrPredictionFailed) {
+			return nil, err
+		}
 
-// 		predics = append(predics, predictions)
-// 	}
+		predics = append(predics, predictions)
+	}
 
-// 	if len(predics) == 0 {
-// 		return nil, ErrNoPredictions
-// 	}
+	if len(predics) == 0 {
+		return nil, ErrNoPredictions
+	}
 
-// 	return predics, nil
-// }
+	return predics, nil
+}
 
 // func (handle *Model) PredictOne(query string, threshoad float32) (Prediction, error) {
 // 	r := C.FastText_Predict(

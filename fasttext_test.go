@@ -12,6 +12,7 @@ func TestOpen(t *testing.T) {
 	assert := require.New(t)
 
 	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
 		model, err := fasttext.Open("testdata/lid.176.ftz")
 
 		assert.NoError(err)
@@ -20,6 +21,7 @@ func TestOpen(t *testing.T) {
 	})
 
 	t.Run("FailedToOpen", func(t *testing.T) {
+		t.Parallel()
 		model, err := fasttext.Open("testdata/lid-not-found.176.ftz")
 
 		assert.EqualError(err, "testdata/lid-not-found.176.ftz cannot be opened for loading!")
@@ -42,34 +44,36 @@ func TestOpen(t *testing.T) {
 // 	assert.Greater(prediction.Probability, float32(0.7))
 // }
 
-// func TestMultilinePredict(t *testing.T) {
-// 	t.Parallel()
-// 	assert := require.New(t)
-
-// 	model, err := fasttext.Open("testdata/lid.176.ftz")
-
-// 	assert.NoError(err)
-
-// 	predictions, err := model.MultiLinePredict([]string{
-// 		"Πες γεια στον μικρό μου φίλο",
-// 		"Say 'ello to my little friend",
-// 	}, 1, 0.5)
-
-// 	assert.NoError(err)
-// 	assert.NotEmpty(predictions)
-// 	assert.Len(predictions, 2)
-
-// 	assert.Len(predictions[0], 1)
-// 	assert.Equal(predictions[0][0].Label, "el") // el => for greek
-// 	assert.Len(predictions[1], 1)
-// 	assert.Equal(predictions[1][0].Label, "en")
-// }
-
-func TestPredict(t *testing.T) {
+func TestMultilinePredict(t *testing.T) {
 	t.Parallel()
 	assert := require.New(t)
 
+	model, err := fasttext.Open("testdata/lid.176.ftz")
+
+	assert.NoError(err)
+
+	predictions, err := model.MultiLinePredict([]string{
+		"Πες γεια στον μικρό μου φίλο",
+		"Say 'ello to my little friend",
+	}, 1, 0.5)
+
+	assert.NoError(err)
+	assert.NotEmpty(predictions)
+	assert.Len(predictions, 2)
+
+	assert.Len(predictions[0], 1)
+	assert.Equal(predictions[0][0].Label, "el") // el => for greek
+	assert.Len(predictions[1], 1)
+	assert.Equal(predictions[1][0].Label, "en")
+}
+
+func TestPredict(t *testing.T) {
+	t.Parallel()
+
+	assert := require.New(t)
+
 	t.Run("WithOnePrediction", func(t *testing.T) {
+		t.Parallel()
 		model, err := fasttext.Open("testdata/lid.176.ftz")
 
 		assert.NoError(err)
@@ -113,6 +117,8 @@ func TestPredict(t *testing.T) {
 	})
 
 	t.Run("WithMultiple", func(t *testing.T) {
+		t.Parallel()
+
 		model, err := fasttext.Open("testdata/lid.176.ftz")
 
 		assert.NoError(err)
@@ -128,6 +134,8 @@ func TestPredict(t *testing.T) {
 	})
 
 	t.Run("Gibberish", func(t *testing.T) {
+		t.Parallel()
+
 		model, err := fasttext.Open("testdata/lid.176.ftz")
 
 		assert.NoError(err)
