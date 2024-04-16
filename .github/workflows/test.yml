@@ -1,25 +1,48 @@
-name: 'Tests'
+name: 'Testing'
 
 on:
+  workflow_call:
   push:
     branches:
       - master
+      - develop
   pull_request:
     branches:
       - master
+      - develop
 jobs:
-  tests:
+  test:
     strategy:
       matrix:
-        go: [ '1.20' ]
-    runs-on: ubuntu-latest
+        os: ['ubuntu-latest']
+        go: [ '1.22' ]
+
+    runs-on: ${{ matrix.os }}
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-tests-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-tests-${{ hashFiles('**/go.sum') }}
       - uses: actions/setup-go@v4
         with:
           go-version: ${{ matrix.go }}
-      - name: Set up gotestfmt
-        run: go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt@latest
+      - name: Install Task
+        uses: arduino/setup-task@v1
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Run tests
-        run: go test -covermode=atomic -coverprofile=coverage.txt -timeout 5m -json -v ./... | gotestfmt -showteststatus
+        run: |
+          go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt@latest
+          task test
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: nano-interactive/go-amqp

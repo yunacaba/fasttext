@@ -6,6 +6,7 @@
 #include <queue>
 #include <stdexcept>
 #include <streambuf>
+#include <string_view>
 
 #include <stdlib.h>
 
@@ -79,46 +80,50 @@ void FastText_DeleteHandle(const FastText_Handle_t handle)
     delete model;
 }
 
-FastText_Predict_t FastText_Predict(const FastText_Handle_t handle, FastText_String_t query, uint32_t k,
-                                    float threshold)
+size_t FastText_Predict(const FastText_Handle_t handle, FastText_String_t query, uint32_t k, float threshold,
+                        FastText_PredictItem_t *const value)
 {
     const auto model = reinterpret_cast<fasttext::FastText *>(handle);
+    auto predictions = model->predictFull(k, std::string_view(query.data, query.size), threshold);
+    const auto count = k > predictions.size() ? predictions.size() : k;
 
-    membuf sbuf(query);
-    std::istream in(&sbuf);
-
-    auto predictions = new Predictions();
-    if (!model->predictLine(in, *predictions, k, threshold))
+    for (size_t i = 0; i < count; i++)
     {
-        delete predictions;
+        const auto &prediction = predictions.at(i);
 
-        return FastText_Predict_t{
-            0,
-            nullptr,
+        std::string_view data = prediction.word.substr(LABEL_PREFIX_SIZE);
+        size_t size = data.size();
+
+        if (size > 8)
+        {
+            size = 8;
+        }
+
+        value[i].probability = prediction.score;
+        value[i].lang = FastText_String_t{
+            .size = size,
+            .data = (char *)data.data(),
         };
     }
 
-    return FastText_Predict_t{
-        predictions->size(),
-        (void *)predictions,
-    };
+    return count;
 }
 
-FastText_Predict_t FastText_Analogy(const FastText_Handle_t handle, FastText_String_t word1, FastText_String_t word2,
-                                    FastText_String_t word3, uint32_t k)
-{
-    const auto model = reinterpret_cast<fasttext::FastText *>(handle);
-    Predictions predictions =
-        model->getAnalogies(k, std::string(word1.data, word1.size), std::string(word2.data, word2.size),
-                            std::string(word3.data, word3.size));
+// FastText_Predict_t FastText_Analogy(const FastText_Handle_t handle, FastText_String_t word1, FastText_String_t word2,
+//                                     FastText_String_t word3, uint32_t k)
+// {
+//     const auto model = reinterpret_cast<fasttext::FastText *>(handle);
+//     Predictions predictions =
+//         model->getAnalogies(k, std::string(word1.data, word1.size), std::string(word2.data, word2.size),
+//                             std::string(word3.data, word3.size));
 
-    auto vec = new Predictions(std::move(predictions));
+//     auto vec = new Predictions(std::move(predictions));
 
-    return FastText_Predict_t{
-        vec->size(),
-        (void *)vec,
-    };
-}
+//     return FastText_Predict_t{
+//         vec->size(),
+//         (void *)vec,
+//     };
+// }
 
 FastText_FloatVector_t FastText_Wordvec(const FastText_Handle_t handle, FastText_String_t word)
 {
@@ -163,22 +168,6 @@ void FastText_FreePredict(FastText_Predict_t predict)
 {
     auto vec = reinterpret_cast<Predictions *>(predict.data);
     delete vec;
-}
-
-FastText_PredictItem_t FastText_PredictItemAt(FastText_Predict_t predict, size_t idx)
-{
-    const auto vec = reinterpret_cast<Predictions *>(predict.data);
-    const auto &data = vec->at(idx);
-
-    auto str = FastText_String_t{
-        data.second.size() - (LABEL_PREFIX_SIZE),
-        (char *)(data.second.c_str() + LABEL_PREFIX_SIZE),
-    };
-
-    return FastText_PredictItem_t{
-        data.first,
-        str,
-    };
 }
 
 END_EXTERN_C()

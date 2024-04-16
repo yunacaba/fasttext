@@ -17,8 +17,7 @@
 #define END_EXTERN_C()
 #endif
 
-BEGIN_EXTERN_C()
-typedef void *FastText_Handle_t;
+BEGIN_EXTERN_C() typedef void *FastText_Handle_t;
 
 typedef struct
 {
@@ -36,13 +35,13 @@ typedef struct
 typedef struct
 {
     float probability;
-    FastText_String_t label;
+    FastText_String_t lang;
 } FastText_PredictItem_t;
 
 typedef struct
 {
     size_t size;
-    void *data;
+    unsigned char *data;
 } FastText_Predict_t;
 
 typedef struct
@@ -61,15 +60,14 @@ typedef struct
 
 FastText_Result_t FastText_NewHandle(FastText_String_t path);
 void FastText_DeleteHandle(const FastText_Handle_t handle);
-FastText_Predict_t FastText_Predict(const FastText_Handle_t handle, FastText_String_t query, uint32_t k,
-                                    float threshold);
+size_t FastText_Predict(const FastText_Handle_t handle, FastText_String_t query, uint32_t k, float threshold,
+                        FastText_PredictItem_t *const value);
 FastText_FloatVector_t FastText_Wordvec(const FastText_Handle_t handle, FastText_String_t word);
 FastText_FloatVector_t FastText_Sentencevec(const FastText_Handle_t handle, FastText_String_t sentance);
-FastText_Predict_t FastText_Analogy(const FastText_Handle_t handle, FastText_String_t word1, FastText_String_t word2,
-                                    FastText_String_t word3, uint32_t k);
+// FastText_Predict_t FastText_Analogy(const FastText_Handle_t handle, FastText_String_t word1, FastText_String_t word2,
+// FastText_String_t word3, uint32_t k);
 
 void FastText_FreeFloatVector(FastText_FloatVector_t vector);
 void FastText_FreePredict(FastText_Predict_t predict);
 
-FastText_PredictItem_t FastText_PredictItemAt(FastText_Predict_t predict, size_t idx);
 END_EXTERN_C()

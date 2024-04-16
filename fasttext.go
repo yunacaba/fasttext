@@ -1,6 +1,6 @@
 package fasttext
 
-// #cgo CXXFLAGS: -I${SRCDIR}/fastText-src -I${SRCDIR} -std=c++17 -O3 -fPIC -pthread -march=native
+// #cgo CXXFLAGS: -I${SRCDIR}/fastText -I${SRCDIR} -std=c++17 -O3 -fPIC -pthread -march=native
 // #cgo LDFLAGS: -lstdc++
 // #include <stdio.h>
 // #include <stdlib.h>
@@ -10,6 +10,7 @@ import "C"
 
 import (
 	"errors"
+	"runtime"
 	"unsafe"
 )
 
@@ -32,11 +33,16 @@ func (e ModelOpenError) Error() string {
 	return string(e)
 }
 
-// Opens a model from a path and returns a model
+// Open opens a model from a path and returns a model
 // object
 func Open(path string) (Model, error) {
+	var pinner runtime.Pinner
+	defer pinner.Unpin()
+
+	cStrPath := cStr(path)
+	pinner.Pin(cStrPath)
 	result := C.FastText_NewHandle(C.FastText_String_t{
-		data: cStr(path),
+		data: cStrPath,
 		size: C.size_t(len(path)),
 	})
 
@@ -55,64 +61,68 @@ func Open(path string) (Model, error) {
 
 // Closes a model handle
 func (handle *Model) Close() error {
-	if handle == nil {
-		return nil
-	}
 	C.FastText_DeleteHandle(handle.p)
 	return nil
 }
 
-func (handle Model) MultiLinePredict(lines []string, k int32, threshoad float32) ([]Predictions, error) {
-	predics := make([]Predictions, 0, len(lines))
+// func (handle *Model) MultiLinePredict(lines []string, k int32, threshoad float32) ([]Predictions, error) {
+// 	predics := make([]Predictions, 0, len(lines))
 
-	for _, line := range lines {
-		predictions, err := handle.Predict(line, k, threshoad)
-		if err != nil && errors.Is(err, ErrPredictionFailed) {
-			return nil, err
-		}
+// 	for _, line := range lines {
+// 		predictions, err := handle.Predict(line, k, threshoad)
+// 		if err != nil && errors.Is(err, ErrPredictionFailed) {
+// 			return nil, err
+// 		}
 
-		predics = append(predics, predictions)
-	}
+// 		predics = append(predics, predictions)
+// 	}
 
-	if len(predics) == 0 {
-		return nil, ErrNoPredictions
-	}
+// 	if len(predics) == 0 {
+// 		return nil, ErrNoPredictions
+// 	}
 
-	return predics, nil
-}
+// 	return predics, nil
+// }
 
-func (handle Model) PredictOne(query string, threshoad float32) (Prediction, error) {
-	r := C.FastText_Predict(
-		handle.p,
-		C.FastText_String_t{
-			data: cStr(query),
-			size: C.size_t(len(query)),
-		},
-		1,
-		C.float(threshoad),
-	)
+// func (handle *Model) PredictOne(query string, threshoad float32) (Prediction, error) {
+// 	r := C.FastText_Predict(
+// 		handle.p,
+// 		C.FastText_String_t{
+// 			data: cStr(query),
+// 			size: C.size_t(len(query)),
+// 		},
+// 		1,
+// 		C.float(threshoad),
+// 	)
 
-	if r.data == nil {
-		return Prediction{}, ErrPredictionFailed
-	}
+// 	if r.data == nil {
+// 		return Prediction{}, ErrPredictionFailed
+// 	}
 
-	defer C.FastText_FreePredict(r)
+// 	defer C.FastText_FreePredict(r)
 
-	if r.size == 0 {
-		return Prediction{}, ErrNoPredictions
-	}
+// 	if r.size == 0 {
+// 		return Prediction{}, ErrNoPredictions
+// 	}
 
-	cPredic := C.FastText_PredictItemAt(r, C.size_t(0))
+// 	cPredic := C.FastText_PredictItemAt(r, C.size_t(0))
 
-	return Prediction{
-		Label:       C.GoStringN(cPredic.label.data, C.int(cPredic.label.size)),
-		Probability: float32(cPredic.probability),
-	}, nil
-}
+// 	return Prediction{
+// 		Label:       C.GoStringN(cPredic.label.data, C.int(cPredic.label.size)),
+// 		Probability: float32(cPredic.probability),
+// 	}, nil
+// }
 
 // Perform model prediction
-func (handle Model) Predict(query string, k int32, threshoad float32) (Predictions, error) {
-	r := C.FastText_Predict(
+func (handle *Model) Predict(query string, k int32, threshoad float32) (Predictions, error) {
+	var pinner runtime.Pinner
+	defer pinner.Unpin()
+
+	inputs := make([]C.FastText_PredictItem_t, k)
+	inputsPtr := unsafe.SliceData(inputs)
+	pinner.Pin(inputsPtr)
+
+	count := C.FastText_Predict(
 		handle.p,
 		C.FastText_String_t{
 			data: cStr(query),
@@ -120,100 +130,128 @@ func (handle Model) Predict(query string, k int32, threshoad float32) (Predictio
 		},
 		C.uint32_t(k),
 		C.float(threshoad),
+		inputsPtr,
 	)
 
-	if r.data == nil {
-		return nil, ErrPredictionFailed
-	}
-
-	defer C.FastText_FreePredict(r)
-
-	if r.size == 0 {
+	if count == 0 {
 		return nil, ErrNoPredictions
 	}
 
-	predictions := make(Predictions, r.size)
+	predictions := make(Predictions, k)
 
-	for i := 0; i < int(r.size); i++ {
-		cPredic := C.FastText_PredictItemAt(r, C.size_t(i))
+	for i := int32(0); i < k; i++ {
+		str := C.GoStringN(inputs[i].lang.data, C.int(inputs[i].lang.size))
 
 		predictions[i] = Prediction{
-			Label:       C.GoStringN(cPredic.label.data, C.int(cPredic.label.size)),
-			Probability: float32(cPredic.probability),
+			Label:       str,
+			Probability: float32(inputs[i].probability),
 		}
 	}
 
 	return predictions, nil
 }
 
-func (handle Model) Analogy(word1, word2, word3 string, k int32) Analogs {
-	// cWord1 := ((*C.char) unsafe.Pointer(unsafe.StringData(word1)))
+// func (handle *Model) Analogy(word1, word2, word3 string, k int32) Analogs {
+// 	// cWord1 := ((*C.char) unsafe.Pointer(unsafe.StringData(word1)))
 
-	r := C.FastText_Analogy(
-		handle.p,
-		C.FastText_String_t{
-			data: cStr(word1),
-			size: C.size_t(len(word1)),
-		},
-		C.FastText_String_t{
-			data: cStr(word2),
-			size: C.size_t(len(word2)),
-		},
-		C.FastText_String_t{
-			data: cStr(word3),
-			size: C.size_t(len(word3)),
-		},
-		C.uint32_t(k),
-	)
+// 	var pinner runtime.Pinner
+// 	defer pinner.Unpin()
 
-	defer C.FastText_FreePredict(r)
+// 	pinner.Pin(word1)
+// 	pinner.Pin(word2)
+// 	pinner.Pin(word3)
 
-	analogs := make(Analogs, r.size)
+// 	strWord1 := cStr(word1)
+// 	pinner.Pin(strWord1)
+// 	strWord2 := cStr(word2)
+// 	pinner.Pin(strWord2)
+// 	strWord3 := cStr(word3)
+// 	pinner.Pin(strWord3)
 
-	for i := uint64(0); i < uint64(r.size); i++ {
-		cPredic := C.FastText_PredictItemAt(r, C.size_t(i))
+// 	r := C.FastText_Analogy(
+// 		handle.p,
+// 		C.FastText_String_t{
+// 			data: strWord1,
+// 			size: C.size_t(len(word1)),
+// 		},
+// 		C.FastText_String_t{
+// 			data: strWord2,
+// 			size: C.size_t(len(word2)),
+// 		},
+// 		C.FastText_String_t{
+// 			data: strWord3,
+// 			size: C.size_t(len(word3)),
+// 		},
+// 		C.uint32_t(k),
+// 	)
 
-		analogs[i] = Analog{
-			Name:        C.GoStringN(cPredic.label.data, C.int(cPredic.label.size)),
-			Probability: float32(cPredic.probability),
-		}
-	}
+// 	defer C.FastText_FreePredict(r)
 
-	return analogs
-}
+// 	analogs := make(Analogs, r.size)
 
-func (handle Model) Wordvec(word string) []float32 {
-	r := C.FastText_Wordvec(
-		handle.p,
-		C.FastText_String_t{
-			data: cStr(word),
-			size: C.size_t(len(word)),
-		},
-	)
-	defer C.FastText_FreeFloatVector(r)
+// 	for i := uint64(0); i < uint64(r.size); i++ {
+// 		cPredic := C.FastText_PredictItemAt(r, C.size_t(i))
 
-	vectors := make([]float32, r.size)
-	copy(vectors, unsafe.Slice((*float32)(unsafe.Pointer(r.data)), r.size))
+// 		analogs[i] = Analog{
+// 			Name:        C.GoStringN(cPredic.label.data, C.int(cPredic.label.size)),
+// 			Probability: float32(cPredic.probability),
+// 		}
+// 	}
 
-	return vectors
-}
+// 	return analogs
+// }
 
-// Requires sentence ends with </s>
-func (handle Model) Sentencevec(query string) []float32 {
-	r := C.FastText_Sentencevec(handle.p, C.FastText_String_t{
-		data: cStr(query),
-		size: C.size_t(len(query)),
-	})
+// func (handle Model) Wordvec(word string) []float32 {
+// 	var pinner runtime.Pinner
+// 	defer pinner.Unpin()
 
-	defer C.FastText_FreeFloatVector(r)
+// 	pinner.Pin(word)
+// 	strData := cStr(word)
+// 	pinner.Pin(strData)
 
-	vectors := make([]float32, r.size)
-	copy(vectors, unsafe.Slice((*float32)(unsafe.Pointer(r.data)), r.size))
+// 	r := C.FastText_Wordvec(
+// 		handle.p,
+// 		C.FastText_String_t{
+// 			data: strData,
+// 			size: C.size_t(len(word)),
+// 		},
+// 	)
+// 	defer C.FastText_FreeFloatVector(r)
 
-	return vectors
-}
+// 	vectors := make([]float32, r.size)
+// 	pinner.Pin(r.data)
 
-//go:inline
+// 	ptr := (*float32)(unsafe.Pointer(r.data))
+// 	pinner.Pin(ptr)
+
+// 	copy(vectors, unsafe.Slice(ptr, r.size))
+
+// 	return vectors
+// }
+
+// Sentencevec requires sentence ends with </s>
+// func (handle Model) Sentencevec(query string) []float32 {
+// 	var pinner runtime.Pinner
+// 	defer pinner.Unpin()
+// 	pinner.Pin(query)
+// 	strData := cStr(query)
+// 	pinner.Pin(strData)
+// 	r := C.FastText_Sentencevec(handle.p, C.FastText_String_t{
+// 		data: strData,
+// 		size: C.size_t(len(query)),
+// 	})
+
+// 	defer C.FastText_FreeFloatVector(r)
+
+// 	vectors := make([]float32, r.size)
+// 	pinner.Pin(r.data)
+// 	ptr := (*float32)(unsafe.Pointer(r.data))
+// 	pinner.Pin(ptr)
+// 	copy(vectors, unsafe.Slice(ptr, r.size))
+
+// 	return vectors
+// }
+
 func cStr(str string) *C.char {
-	return ((*C.char)(unsafe.Pointer(unsafe.StringData(str))))
+	return (*C.char)(unsafe.Pointer(unsafe.StringData(str)))
 }
