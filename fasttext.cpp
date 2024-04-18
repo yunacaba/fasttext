@@ -1,1 +1,1 @@
-#include <fasttext.cc>
+#include <fasttext/src/fasttext.cc>

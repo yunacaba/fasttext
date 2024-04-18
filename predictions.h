@@ -3,6 +3,18 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define LABEL_PREFIX ("__label__")
+#define LABEL_PREFIX_SIZE (sizeof(LABEL_PREFIX) - 1)
+
+#define FREE_STRING(str)                                                                                               \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        if (str.data != nullptr)                                                                                       \
+            free(str.data);                                                                                            \
+        str.data = nullptr;                                                                                            \
+        str.size = 0;                                                                                                  \
+    } while (0)
+
 #ifdef __cplusplus
 #define BEGIN_EXTERN_C()                                                                                               \
     extern "C"                                                                                                         \
@@ -40,12 +52,6 @@ typedef struct
 
 typedef struct
 {
-    size_t size;
-    unsigned char *data;
-} FastText_Predict_t;
-
-typedef struct
-{
     enum
     {
         SUCCESS = 0,
@@ -63,11 +69,7 @@ void FastText_DeleteHandle(const FastText_Handle_t handle);
 size_t FastText_Predict(const FastText_Handle_t handle, FastText_String_t query, uint32_t k, float threshold,
                         FastText_PredictItem_t *const value);
 FastText_FloatVector_t FastText_Wordvec(const FastText_Handle_t handle, FastText_String_t word);
-FastText_FloatVector_t FastText_Sentencevec(const FastText_Handle_t handle, FastText_String_t sentance);
-// FastText_Predict_t FastText_Analogy(const FastText_Handle_t handle, FastText_String_t word1, FastText_String_t word2,
-// FastText_String_t word3, uint32_t k);
 
 void FastText_FreeFloatVector(FastText_FloatVector_t vector);
-void FastText_FreePredict(FastText_Predict_t predict);
 
 END_EXTERN_C()

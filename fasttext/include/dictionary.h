@@ -83,7 +83,7 @@ class Dictionary
     bool discard(int32_t, real) const;
     std::string getWord(int32_t) const;
     const std::vector<int32_t> &getSubwords(int32_t) const;
-    const std::vector<int32_t> getSubwords(const std::string &) const;
+    const std::vector<int32_t> getSubwords(const std::string_view) const;
     void getSubwords(const std::string &, std::vector<int32_t> &, std::vector<std::string> &) const;
     void computeSubwords(const std::string &, std::vector<int32_t> &,
                          std::vector<std::string> *substrings = nullptr) const;

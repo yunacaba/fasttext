@@ -92,7 +92,7 @@ const std::vector<int32_t> &Dictionary::getSubwords(int32_t i) const
     return words_[i].subwords;
 }
 
-const std::vector<int32_t> Dictionary::getSubwords(const std::string &word) const
+const std::vector<int32_t> Dictionary::getSubwords(const std::string_view word) const
 {
     int32_t i = getId(word);
     if (i >= 0)
@@ -102,7 +102,7 @@ const std::vector<int32_t> Dictionary::getSubwords(const std::string &word) cons
     std::vector<int32_t> ngrams;
     if (word != EOS)
     {
-        computeSubwords(BOW + word + EOW, ngrams);
+        computeSubwords(BOW + word.data() + EOW, ngrams);
     }
     return ngrams;
 }

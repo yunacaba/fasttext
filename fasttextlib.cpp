@@ -1,0 +1,12 @@
+#include <fasttext/src/args.cc>
+#include <fasttext/src/autotune.cc>
+#include <fasttext/src/densematrix.cc>
+#include <fasttext/src/dictionary.cc>
+#include <fasttext/src/loss.cc>
+#include <fasttext/src/matrix.cc>
+#include <fasttext/src/meter.cc>
+#include <fasttext/src/model.cc>
+#include <fasttext/src/productquantizer.cc>
+#include <fasttext/src/quantmatrix.cc>
+#include <fasttext/src/utils.cc>
+#include <fasttext/src/vector.cc>

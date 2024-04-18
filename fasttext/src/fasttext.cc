@@ -120,14 +120,35 @@ int32_t FastText::getLabelId(const std::string &label) const
     return labelId;
 }
 
-void FastText::getWordVector(Vector &vec, const std::string &word) const
+Vector FastText::getWordVector(const std::string_view word) const
 {
     const std::vector<int32_t> &ngrams = dict_->getSubwords(word);
+    Vector vec(args_->dim);
     vec.zero();
+
     for (int i = 0; i < ngrams.size(); i++)
     {
         addInputVector(vec, ngrams[i]);
     }
+
+    if (ngrams.size() > 0)
+    {
+        vec.mul(1.0 / ngrams.size());
+    }
+
+    return std::move(vec);
+}
+
+void FastText::getWordVector(Vector &vec, std::string_view word) const
+{
+    const std::vector<int32_t> &ngrams = dict_->getSubwords(word);
+    vec.zero();
+
+    for (int i = 0; i < ngrams.size(); i++)
+    {
+        addInputVector(vec, ngrams[i]);
+    }
+
     if (ngrams.size() > 0)
     {
         vec.mul(1.0 / ngrams.size());
@@ -158,7 +179,7 @@ void FastText::saveVectors(const std::string &filename)
     for (int32_t i = 0; i < dict_->nwords(); i++)
     {
         std::string word = dict_->getWord(i);
-        getWordVector(vec, word);
+        getWordVector(vec, std::string_view(word));
         ofs << word << " " << vec << std::endl;
     }
     ofs.close();

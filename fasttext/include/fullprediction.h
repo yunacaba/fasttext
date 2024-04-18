@@ -14,16 +14,16 @@ class FullPrediction
     };
 
   private:
-    Predictions predictions_;
+    fasttext::Predictions predictions_;
     std::shared_ptr<Dictionary> dict_;
 
   public:
-    FullPrediction(Predictions &&predictions, const std::shared_ptr<Dictionary> &dict)
+    FullPrediction(fasttext::Predictions &&predictions, const std::shared_ptr<Dictionary> &dict)
         : predictions_(std::move(predictions)), dict_(dict)
     {
     }
 
-    Item at(size_t idx) const
+    inline Item at(size_t idx) const
     {
         const auto &prediction = predictions_.at(idx);
 
@@ -35,7 +35,7 @@ class FullPrediction
         return item;
     }
 
-    size_t size() const
+    inline size_t size() const
     {
         return predictions_.size();
     }

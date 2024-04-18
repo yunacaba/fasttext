@@ -84,7 +84,8 @@ class FastText
 
     int32_t getLabelId(const std::string &label) const;
 
-    void getWordVector(Vector &vec, const std::string &word) const;
+    Vector getWordVector(const std::string_view word) const;
+    void getWordVector(Vector &vec, const std::string_view word) const;
 
     void getSubwordVector(Vector &vec, const std::string &subword) const;
 

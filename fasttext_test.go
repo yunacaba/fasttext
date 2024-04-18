@@ -29,21 +29,6 @@ func TestOpen(t *testing.T) {
 	})
 }
 
-// func TestPredictOne(t *testing.T) {
-// 	t.Parallel()
-// 	assert := require.New(t)
-
-// 	model, err := fasttext.Open("testdata/lid.176.ftz")
-// 	assert.NoError(err)
-
-// 	prediction, err := model.PredictOne("hello world from my dear C++", 0.0)
-
-// 	assert.NoError(err)
-// 	assert.NotEmpty(prediction)
-// 	assert.Equal("en", prediction.Label)
-// 	assert.Greater(prediction.Probability, float32(0.7))
-// }
-
 func TestMultilinePredict(t *testing.T) {
 	t.Parallel()
 	assert := require.New(t)
