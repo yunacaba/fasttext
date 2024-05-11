@@ -1,3 +1,4 @@
+#include <cstring>
 #include <fasttext/include/fasttext.h>
 #include <string>
 
