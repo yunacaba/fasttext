@@ -1,24 +1,28 @@
 # Changelog
 
-## [v2.0.0-alfa1](https://github.com/nano-interactive/go-fasttext/releases/tag/v2.0.0-alfa1) (2024-04-18)
+## [v1.0.0-beta1](https://github.com/nano-interactive/fasttext/releases/tag/v1.0.0-beta1) (2024-05-11)
 
-[Full Changelog](https://github.com/nano-interactive/go-fasttext/compare/v1.1.1...v2.0.0-alfa1)
+[Full Changelog](https://github.com/nano-interactive/fasttext/compare/v2.0.0-alfa1...v1.0.0-beta1)
 
-## [v1.1.1](https://github.com/nano-interactive/go-fasttext/releases/tag/v2.0.0-alfa1) (2023-07-13)
+## [v2.0.0-alfa1](https://github.com/nano-interactive/fasttext/releases/tag/v1.0.0-beta1) (2024-04-18)
 
-[Full Changelog](https://github.com/nano-interactive/go-fasttext/compare/v1.1.0...v1.1.1)
+[Full Changelog](https://github.com/nano-interactive/fasttext/compare/v1.1.1...v2.0.0-alfa1)
 
-## [v1.1.0](https://github.com/nano-interactive/go-fasttext/releases/tag/v2.0.0-alfa1) (2023-07-13)
+## [v1.1.1](https://github.com/nano-interactive/fasttext/releases/tag/v1.0.0-beta1) (2023-07-13)
 
-[Full Changelog](https://github.com/nano-interactive/go-fasttext/compare/v1.0.0...v1.1.0)
+[Full Changelog](https://github.com/nano-interactive/fasttext/compare/v1.1.0...v1.1.1)
 
-## [v1.0.0](https://github.com/nano-interactive/go-fasttext/releases/tag/v2.0.0-alfa1) (2023-07-08)
+## [v1.1.0](https://github.com/nano-interactive/fasttext/releases/tag/v1.0.0-beta1) (2023-07-13)
 
-[Full Changelog](https://github.com/nano-interactive/go-fasttext/compare/007866660b25124e4ac9ff6dbc74a7d9510a7da7...v1.0.0)
+[Full Changelog](https://github.com/nano-interactive/fasttext/compare/v1.0.0...v1.1.0)
+
+## [v1.0.0](https://github.com/nano-interactive/fasttext/releases/tag/v1.0.0-beta1) (2023-07-08)
+
+[Full Changelog](https://github.com/nano-interactive/fasttext/compare/007866660b25124e4ac9ff6dbc74a7d9510a7da7...v1.0.0)
 
 **Implemented enhancements:**
 
-- Feat/new library [\#1](https://github.com/nano-interactive/go-fasttext/pull/1) ([CodeLieutenant](https://github.com/CodeLieutenant))
+- Feat/new library [\#1](https://github.com/nano-interactive/fasttext/pull/1) ([CodeLieutenant](https://github.com/CodeLieutenant))
 
 
 
