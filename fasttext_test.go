@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/yunacaba/fasttext/v2"
+	"github.com/yunacaba/fasttext"
 )
 
 func TestOpen(t *testing.T) {
