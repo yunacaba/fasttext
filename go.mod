@@ -1,4 +1,4 @@
-module github.com/yunacaba/fasttext/v2
+module github.com/yunacaba/fasttext
 
 go 1.22
 
