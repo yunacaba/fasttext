@@ -11,7 +11,7 @@ on:
       - master
       - develop
 jobs:
-  test:
+  build-and-test:
     strategy:
       matrix:
         os: ['ubuntu-latest']
