@@ -8,7 +8,7 @@
 #include <streambuf>
 #include <string_view>
 
-#include <fasttext/include/fasttext.h>
+#include <fasttext.h>
 
 #include "predictions.h"
 

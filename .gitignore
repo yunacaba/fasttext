@@ -688,3 +688,9 @@ paket-files/
 
 .idea/
 coverage.txt
+
+# Bazel output
+bazel-bin/
+bazel-fasttext/
+bazel-out/
+bazel-testlogs/

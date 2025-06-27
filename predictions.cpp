@@ -1,4 +1,4 @@
-#include <fasttext/include/fasttext.h>
+#include <fasttext.h>
 
 #include "predictions.h"
 

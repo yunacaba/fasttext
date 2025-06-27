@@ -1,0 +1,31 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+cc_library(
+    name = "fasttext_cc",
+    srcs = [
+        "src/args.cc",
+        "src/autotune.cc",
+        "src/densematrix.cc",
+        "src/dictionary.cc",
+        "src/fasttext.cc",
+        "src/loss.cc",
+        "src/matrix.cc",
+        "src/meter.cc",
+        "src/model.cc",
+        "src/productquantizer.cc",
+        "src/quantmatrix.cc",
+        "src/utils.cc",
+        "src/vector.cc",
+    ],
+    hdrs = glob(["include/*.h"]),
+    includes = ["include"],
+    copts = [
+        "-std=c++17",
+        "-O3",
+        "-ffast-math",
+        "-fPIC",
+        "-pthread",
+        "-Wno-defaulted-function-deleted",
+    ],
+    visibility = ["//:__subpackages__"],
+)
