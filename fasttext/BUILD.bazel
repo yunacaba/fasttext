@@ -1,7 +1,7 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 cc_library(
-    name = "fasttext_cc",
+    name = "fasttext_lib",
     srcs = [
         "src/args.cc",
         "src/autotune.cc",
@@ -28,4 +28,18 @@ cc_library(
         "-Wno-defaulted-function-deleted",
     ],
     visibility = ["//:__subpackages__"],
+)
+
+cc_binary(
+    name = "fasttext",
+    srcs = ["src/main.cc"],
+    copts = [
+        "-std=c++17",
+        "-O3",
+        "-ffast-math",
+        "-pthread",
+        "-fno-rtti",
+    ],
+    deps = [":fasttext_lib"],
+    visibility = ["//visibility:public"],
 )

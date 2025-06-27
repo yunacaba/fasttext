@@ -136,7 +136,7 @@ Vector FastText::getWordVector(const std::string_view word) const
         vec.mul(1.0 / ngrams.size());
     }
 
-    return std::move(vec);
+    return vec;
 }
 
 void FastText::getWordVector(Vector &vec, std::string_view word) const
