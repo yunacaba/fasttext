@@ -3,8 +3,8 @@ package fasttext_test
 import (
 	"testing"
 
-	"github.com/nano-interactive/fasttext/v2"
 	"github.com/stretchr/testify/require"
+	"github.com/yunacaba/fasttext/v2"
 )
 
 func TestOpen(t *testing.T) {

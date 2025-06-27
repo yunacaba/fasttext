@@ -1,6 +1,7 @@
 #include <cstring>
-#include <fasttext/include/fasttext.h>
 #include <string>
+
+#include <fasttext.h>
 
 #include "predictions.h"
 

@@ -1,0 +1,47 @@
+load("@gazelle//:def.bzl", "gazelle")
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+# gazelle:prefix github.com/yunacaba/fasttext/v2
+gazelle(name = "gazelle")
+
+cc_library(
+    name = "fasttext_c_wrapper",
+    srcs = [
+        "handle.cpp",
+        "prediction.cpp",
+        "predictions.cpp",
+    ],
+    hdrs = ["predictions.h"],
+    copts = [
+        "-std=c++17",
+        "-Ofast",
+        "-fPIC",
+        "-pthread",
+        "-Wno-defaulted-function-deleted",
+    ],
+    deps = ["//fasttext:fasttext_cc"],
+    visibility = ["//visibility:public"],
+)
+
+go_library(
+    name = "fasttext",
+    srcs = [
+        "analog.go",
+        "fasttext.go",
+        "helpers.go",
+        "prediction.go",
+    ],
+    cgo = True,
+    importpath = "github.com/yunacaba/fasttext/v2",
+    visibility = ["//visibility:public"],
+    cdeps = [":fasttext_c_wrapper"],
+)
+
+go_test(
+    name = "fasttext_test",
+    srcs = ["fasttext_test.go"],
+    embed = [":fasttext"],
+    data = glob(["testdata/**"]),
+    deps = ["@com_github_stretchr_testify//require"],
+)
